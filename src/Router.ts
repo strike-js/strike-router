@@ -9,10 +9,8 @@ import {Dictionary,identity,
         IRouter,DataStore} from './Util'; 
 
 
-export interface RouterComponentProps{
-    actionType:string|number; 
-    stateKey:string;
-    initialState?:RouterComponentState;
+export interface RouterProps{
+    initialState?:RouterState;
     initialRoute?:string;
     history:RouteHistory; 
     pathSep?:string;
@@ -20,17 +18,18 @@ export interface RouterComponentProps{
     onRouteChange?(routeDef:RouteDef,params:Dictionary<any>):void;
 }
 
-export interface RouterComponentState{
+export interface RouterState{
     currentRoute?:string; 
     prevRoute?:string; 
 }
 
-export class Router extends React.Component<RouterComponentProps,RouterComponentState> implements IRouter{
+export class Router extends React.Component<RouterProps,RouterState> implements IRouter{
     _doneSetup:boolean = false;
     _routeData:DataStore;
     _routeDefs:RouteDef[] = [];
     _pendingRedirect:RouteDef = null;
     _routeIndices:Dictionary<number> = {};
+    _activeRoute:RouteDef = null; 
     PATH_SEP:string;
     constructor(props) {
         super(props);
@@ -100,12 +99,21 @@ export class Router extends React.Component<RouterComponentProps,RouterComponent
         }
     }
 
-    componentDidUpdate(){
+    componentDidUpdate(prevProps:RouterProps,prevState:RouterState){
         this._checkRedirect();
+        if (this.props.onRouteChange){
+            if (prevState.currentRoute !== this.state.currentRoute){
+                this.props.onRouteChange(this._activeRoute,this._activeRoute.test(this.state.currentRoute));
+            }
+        }
+
     }
 
     componentDidMount(){
         this._checkRedirect();
+        if (this.props.onRouteChange){
+            this.props.onRouteChange(this._activeRoute,this._activeRoute.test(this.state.currentRoute));
+        }
     }
 
     render() {
@@ -118,8 +126,7 @@ export class Router extends React.Component<RouterComponentProps,RouterComponent
                 this._pendingRedirect = z; 
                 return null;
             }
-        }
-        if (z && !z.isRedirect()) {
+            this._activeRoute = z; 
             return z.render();
         }
         return null;

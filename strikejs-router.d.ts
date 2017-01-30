@@ -95,10 +95,10 @@ declare module "strikejs-router"{
     export function hashHistory():RouteHistory;
     export function popStateHistory(root:string):RouteHistory;
 
-    export interface RouterComponentProps{
+    export interface RouterProps{
         actionType:string|number; 
         stateKey:string;
-        initialState?:RouterComponentState;
+        initialState?:RouterState;
         initialRoute?:string;
         history:RouteHistory; 
         pathSep?:string;
@@ -106,12 +106,12 @@ declare module "strikejs-router"{
         onRouteChange?(routeDef:RouteDef,params:Dictionary<any>):void;
     }
 
-    export interface RouterComponentState{
+    export interface RouterState{
         currentRoute?:string; 
         prevRoute?:string; 
     }
 
-    export class Router extends React.Component<RouterComponentProps,RouterComponentState> implements IRouter{
+    export class Router extends React.Component<RouterProps,RouterState> implements IRouter{
         _doneSetup:boolean;
         _routeData:DataStore;
         _routeDefs:RouteDef[];

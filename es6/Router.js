@@ -7,6 +7,7 @@ export class Router extends React.Component {
         this._routeDefs = [];
         this._pendingRedirect = null;
         this._routeIndices = {};
+        this._activeRoute = null;
         this.PATH_SEP = props.pathSep || '/';
         this._routeData = createDataStore();
         this.state = props.initialState || {
@@ -61,11 +62,19 @@ export class Router extends React.Component {
             this.props.history.goTo(redirect.props('to'));
         }
     }
-    componentDidUpdate() {
+    componentDidUpdate(prevProps, prevState) {
         this._checkRedirect();
+        if (this.props.onRouteChange) {
+            if (prevState.currentRoute !== this.state.currentRoute) {
+                this.props.onRouteChange(this._activeRoute, this._activeRoute.test(this.state.currentRoute));
+            }
+        }
     }
     componentDidMount() {
         this._checkRedirect();
+        if (this.props.onRouteChange) {
+            this.props.onRouteChange(this._activeRoute, this._activeRoute.test(this.state.currentRoute));
+        }
     }
     render() {
         let currentRoute = this.state.currentRoute;
@@ -77,8 +86,7 @@ export class Router extends React.Component {
                 this._pendingRedirect = z;
                 return null;
             }
-        }
-        if (z && !z.isRedirect()) {
+            this._activeRoute = z;
             return z.render();
         }
         return null;
