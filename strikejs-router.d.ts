@@ -96,8 +96,6 @@ declare module "strikejs-router"{
     export function popStateHistory(root:string):RouteHistory;
 
     export interface RouterProps{
-        actionType:string|number; 
-        stateKey:string;
         initialState?:RouterState;
         initialRoute?:string;
         history:RouteHistory; 
@@ -117,6 +115,7 @@ declare module "strikejs-router"{
         _routeDefs:RouteDef[];
         _pendingRedirect:RouteDef;
         _routeIndices:Dictionary<number>;
+        _activeRoute:RouteDef;
         PATH_SEP:string;
         constructor(props);
 
