@@ -15,6 +15,7 @@ export interface RouterProps{
     history:RouteHistory; 
     pathSep?:string;
     rootPath?:string;
+    dataStore?:DataStore;
     children:any;
     onRouteChange?(routeDef:RouteDef,params:Dictionary<any>):void;
 }
@@ -35,7 +36,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
     constructor(props:RouterProps) {
         super(props);
         this.PATH_SEP = props.pathSep || '/';
-        this._routeData = createDataStore();
+        this._routeData = props.dataStore || createDataStore();
         this.state = props.initialState || {
           currentRoute:props.initialRoute || props.history.currentRoute(),
         };

@@ -9,7 +9,7 @@ export class Router extends React.Component {
         this._routeIndices = {};
         this._activeRoute = null;
         this.PATH_SEP = props.pathSep || '/';
-        this._routeData = createDataStore();
+        this._routeData = props.dataStore || createDataStore();
         this.state = props.initialState || {
             currentRoute: props.initialRoute || props.history.currentRoute(),
         };
