@@ -9,6 +9,20 @@ export interface RouteProps{
     router:IRouter; 
 }
 
+export interface IndexRouteProps{
+    component?:React.ComponentClass<any>; 
+    props?:any; 
+    render?:(props:any)=>React.ReactElement<any>; 
+    router:IRouter; 
+}
+
+export interface NotFoundRouteProps{
+    component?:React.ComponentClass<any>; 
+    props?:any; 
+    render?:(props:any)=>React.ReactElement<any>; 
+    router:IRouter; 
+}
+
 export interface RouteState {
 
 }
@@ -28,7 +42,7 @@ export class Route extends React.Component<RouteProps,RouteState> {
     }
 }
 
-export class IndexRoute extends React.Component<RouteProps,RouteState> {
+export class IndexRoute extends React.Component<IndexRouteProps,RouteState> {
     constructor(props) {
         super(props);
         this.state = {};
@@ -37,7 +51,7 @@ export class IndexRoute extends React.Component<RouteProps,RouteState> {
         return null;
     }
 }
-export class NotFoundRoute extends React.Component<RouteProps,RouteState> {
+export class NotFoundRoute extends React.Component<NotFoundRouteProps,RouteState> {
     constructor(props) {
         super(props);
         this.state = {};

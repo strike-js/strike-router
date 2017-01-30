@@ -77,14 +77,29 @@ declare module "strikejs-router"{
         to:string;
     }
 
+
+    export interface IndexRouteProps{
+        component?:React.ComponentClass<any>; 
+        props?:any; 
+        render?:(props:any)=>React.ReactElement<any>; 
+        router:IRouter; 
+    }
+
+    export interface NotFoundRouteProps{
+        component?:React.ComponentClass<any>; 
+        props?:any; 
+        render?:(props:any)=>React.ReactElement<any>; 
+        router:IRouter; 
+    }
+
     export class Route extends React.Component<RouteProps,RouteState> {
         constructor(props);
     }
 
-    export class IndexRoute extends React.Component<RouteProps,RouteState> {
+    export class IndexRoute extends React.Component<IndexRouteProps,RouteState> {
         constructor(props) ;
     }
-    export class NotFoundRoute extends React.Component<RouteProps,RouteState> {
+    export class NotFoundRoute extends React.Component<NotFoundRouteProps,RouteState> {
         constructor(props);
     }
 
