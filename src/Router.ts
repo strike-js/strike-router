@@ -44,16 +44,16 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
         traverse(props.children, this, [], props.rootPath || '');
     }
 
-    setRouteData(data) {
-        this._routeData.set(this.state.currentRoute, data);
+    setRouteData(data:any,atKey?:string) {
+        this._routeData.set(atKey?[this.state.currentRoute,atKey].join(this.PATH_SEP):this.state.currentRoute, data);
     }
 
-    getRouteData(){
-        return this._routeData.get(this.state.currentRoute); 
+    getRouteData(key?:string){
+        return this._routeData.get(key?[this.state.currentRoute,key].join(this.PATH_SEP):this.state.currentRoute); 
     }
 
-    getDataForRoute(route) {
-        return this._routeData[route];
+    getDataForRoute(route:string) {
+        return this._routeData.get(route);
     }
 
     getCurrentRoute():string {

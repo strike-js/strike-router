@@ -29,8 +29,8 @@ declare module "strikejs-router"{
     }
 
     export interface RouteDataStore{
-        setRouteData(data:any):void;
-        getRouteData():any;
+        setRouteData(data:any,atKey?:string):void;
+        getRouteData(atKey?:string):any;
     }
 
     export interface RouteGuard {
@@ -129,9 +129,9 @@ declare module "strikejs-router"{
         PATH_SEP:string;
         constructor(props);
 
-        setRouteData(data);
+        setRouteData(data:any,atKey?:string):void;
 
-        getRouteData();
+        getRouteData(key?:string):any;
 
         getDataForRoute(route);
 

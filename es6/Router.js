@@ -16,14 +16,14 @@ export class Router extends React.Component {
         props.history.setDelegate(this);
         traverse(props.children, this, [], props.rootPath || '');
     }
-    setRouteData(data) {
-        this._routeData.set(this.state.currentRoute, data);
+    setRouteData(data, atKey) {
+        this._routeData.set(atKey ? [this.state.currentRoute, atKey].join(this.PATH_SEP) : this.state.currentRoute, data);
     }
-    getRouteData() {
-        return this._routeData.get(this.state.currentRoute);
+    getRouteData(key) {
+        return this._routeData.get(key ? [this.state.currentRoute, key].join(this.PATH_SEP) : this.state.currentRoute);
     }
     getDataForRoute(route) {
-        return this._routeData[route];
+        return this._routeData.get(route);
     }
     getCurrentRoute() {
         return this.state.currentRoute;

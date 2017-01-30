@@ -161,8 +161,8 @@ export interface DataStore{
 }
 
 export interface RouteDataStore{
-    setRouteData(data:any):void;
-    getRouteData():any;
+    setRouteData(data:any,atKey?:string):void;
+    getRouteData(atKey?:string):any;
 }
 
 export interface RouteGuard {
