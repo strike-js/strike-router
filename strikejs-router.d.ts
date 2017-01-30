@@ -64,7 +64,6 @@ declare module "strikejs-router"{
         component?:React.ComponentClass<any>; 
         props?:any; 
         render?:(props:any)=>React.ReactElement<any>; 
-        children:any;
     }
 
     export interface RouteState {
