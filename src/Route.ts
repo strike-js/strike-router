@@ -6,21 +6,18 @@ export interface RouteProps{
     props?:any; 
     render?:(props:any)=>React.ReactElement<any>; 
     children:any;
-    router:IRouter; 
 }
 
 export interface IndexRouteProps{
     component?:React.ComponentClass<any>; 
     props?:any; 
     render?:(props:any)=>React.ReactElement<any>; 
-    router:IRouter; 
 }
 
 export interface NotFoundRouteProps{
     component?:React.ComponentClass<any>; 
     props?:any; 
     render?:(props:any)=>React.ReactElement<any>; 
-    router:IRouter; 
 }
 
 export interface RouteState {

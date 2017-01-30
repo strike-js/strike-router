@@ -65,7 +65,6 @@ declare module "strikejs-router"{
         props?:any; 
         render?:(props:any)=>React.ReactElement<any>; 
         children:any;
-        router:IRouter; 
     }
 
     export interface RouteState {
@@ -82,14 +81,12 @@ declare module "strikejs-router"{
         component?:React.ComponentClass<any>; 
         props?:any; 
         render?:(props:any)=>React.ReactElement<any>; 
-        router:IRouter; 
     }
 
     export interface NotFoundRouteProps{
         component?:React.ComponentClass<any>; 
         props?:any; 
         render?:(props:any)=>React.ReactElement<any>; 
-        router:IRouter; 
     }
 
     export class Route extends React.Component<RouteProps,RouteState> {
@@ -115,7 +112,6 @@ declare module "strikejs-router"{
         initialRoute?:string;
         history:RouteHistory; 
         pathSep?:string;
-        children:(router:Router)=>any;
         onRouteChange?(routeDef:RouteDef,params:Dictionary<any>):void;
     }
 
