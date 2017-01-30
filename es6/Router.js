@@ -88,7 +88,7 @@ export class Router extends React.Component {
                 return null;
             }
             this._activeRoute = z;
-            return z.render();
+            return z.render(this.getRouteData());
         }
         return null;
     }

@@ -47,6 +47,7 @@ export function getParamsFromMatches(params, matches, route, path) {
 }
 export function parseRoute(route, hasChildren, elemProps, renderStack, isRedirect = false) {
     let routeParams = [];
+    let params = {};
     let stack = renderStack.slice(0);
     let routeData = null;
     let r = route.replace(/:([^\s\/]+):(number|string|boolean)/g, (e, k, v) => {
@@ -66,7 +67,7 @@ export function parseRoute(route, hasChildren, elemProps, renderStack, isRedirec
         reg.lastIndex = 0;
         let matches = path.match(reg);
         if (matches && matches.length) {
-            return getParamsFromMatches(routeParams, matches, route, path);
+            return (params = getParamsFromMatches(routeParams, matches, route, path));
         }
         return null;
     }
@@ -82,15 +83,19 @@ export function parseRoute(route, hasChildren, elemProps, renderStack, isRedirec
     function _isRedirect() {
         return isRedirect;
     }
-    function render(data) {
+    function render() {
         if (isRedirect) {
             return null;
         }
         if (stack.length === 1) {
+            stack[0][1].routeParams = params;
             return React.createElement(stack[0][0], stack[0][1]);
         }
         else {
             return stack.reduceRight((prev, current, a, b) => {
+                let jj = prev.length ? prev[1] : null;
+                jj && (jj.routeParams = params);
+                current[1].routeParams = params;
                 return (React.createElement(current[0], current[1], prev.length ? React.createElement(prev[0], prev[1]) : prev));
             });
         }
@@ -121,6 +126,7 @@ export function traverse(children, router, renderStack, parentPath = '') {
     return React.Children.map(children, (child, index) => {
         let hasChildren = countChildren(child.props.children) > 0, childPath = child.props.path;
         child.props.props.router = router;
+        child.props.props.dataStore = router.getDataStore();
         renderStack.push([child.props.component, child.props.props]);
         if (hasChildren) {
             traverse(child.props.children, router, renderStack, [parentPath, childPath].join(pathSep));

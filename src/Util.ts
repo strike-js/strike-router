@@ -14,7 +14,7 @@ export interface RouteDef {
     data(data:any);
     props(...props:any[]);
     isRedirect():boolean;
-    render():any;
+    render(data?:any):any;
 }
 
 export const TYPES_TO_PARSE:Dictionary<any> = {
@@ -70,8 +70,10 @@ export function getParamsFromMatches(params:string[][],matches:string[],route:st
     return data; 
 }
 
-export function parseRoute(route:string, hasChildren:boolean, elemProps:any, renderStack:any[][], isRedirect:boolean = false):RouteDef{
+export function parseRoute(route:string, hasChildren:boolean, 
+    elemProps:any, renderStack:any[][], isRedirect:boolean = false):RouteDef{
     let routeParams = [];
+    let params = {};
     let stack = renderStack.slice(0);
     let routeData = null;
     let r = route.replace(/:([^\s\/]+):(number|string|boolean)/g, (e, k, v) => {
@@ -93,7 +95,7 @@ export function parseRoute(route:string, hasChildren:boolean, elemProps:any, ren
         reg.lastIndex = 0;
         let matches = path.match(reg);
         if (matches && matches.length) {
-            return getParamsFromMatches(routeParams, matches, route, path);
+            return (params = getParamsFromMatches(routeParams, matches, route, path));
         }
         return null;
     }
@@ -113,15 +115,19 @@ export function parseRoute(route:string, hasChildren:boolean, elemProps:any, ren
         return isRedirect;
     }
 
-    function render(data?:any){
+    function render(){
         if (isRedirect){
             return null;
         }
         if (stack.length === 1){
+            stack[0][1].routeParams = params;
             return React.createElement(stack[0][0],stack[0][1]);
         }else {
             return (stack as any).reduceRight((prev:any,current:any,a,b)=>{
-            return (React.createElement(current[0], current[1], 
+                let jj = prev.length?prev[1]:null;
+                jj && (jj.routeParams = params);
+                current[1].routeParams = params;
+                return (React.createElement(current[0], current[1], 
                             prev.length?React.createElement(prev[0],prev[1]):prev));
             });
         }
@@ -188,6 +194,7 @@ export function traverse(children:React.ReactChild, router:IRouter, renderStack:
         let hasChildren = countChildren(child.props.children) > 0,
             childPath = child.props.path;
         child.props.props.router = router;
+        child.props.props.dataStore = router.getDataStore();
         renderStack.push([child.props.component,child.props.props]);
         
         if (hasChildren) {
