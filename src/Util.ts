@@ -136,13 +136,10 @@ export function parseRoute(route:string, hasChildren:boolean,
             return React.createElement(innerChild[0],innerChild[1]);
         } else {
             inject(dataStore,innerChild[0],innerChild[1]);
+            innerChild[1].routeParams = params;
             return (stack as any).reduceRight((prev:any,current:any,a,b)=>{
-                if (prev && prev.length){
-                    inject(dataStore,prev[0],prev[1]); 
-                    prev[1].routeParams = params; 
-                }
-                current[1].routeParams = params;
                 inject(dataStore,current[0],current[1]);
+                current[1].routeParams = params;
                 return (React.createElement(current[0], current[1],prev));
             },React.createElement(innerChild[0],innerChild[1]));
         }
