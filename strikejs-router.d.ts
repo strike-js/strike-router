@@ -111,6 +111,7 @@ declare module "strikejs-router"{
         initialRoute?:string;
         history:RouteHistory; 
         pathSep?:string;
+        dataStore?:DataStore;
         onRouteChange?(routeDef:RouteDef,params:Dictionary<any>):void;
     }
 
