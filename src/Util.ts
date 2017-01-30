@@ -115,18 +115,31 @@ export function parseRoute(route:string, hasChildren:boolean,
         return isRedirect;
     }
 
-    function render(){
+    function render(dataStore:DataStore){
         if (isRedirect){
             return null;
         }
+        let $inject:string[]; 
         if (stack.length === 1){
+            $inject = stack[0][0].$inject; 
             stack[0][1].routeParams = params;
+            if (typeof $inject === "object" && $inject.length){
+                $inject.forEach((e)=>{
+                    stack[0][1][e] = dataStore.get(e);
+                });
+            }
             return React.createElement(stack[0][0],stack[0][1]);
         }else {
             return (stack as any).reduceRight((prev:any,current:any,a,b)=>{
                 let jj = prev.length?prev[1]:null;
                 jj && (jj.routeParams = params);
                 current[1].routeParams = params;
+                $inject = current[0].$inject; 
+                if (typeof $inject === "object" && $inject.length){
+                    $inject.forEach((e)=>{
+                        stack[0][1][e] = dataStore.get(e);
+                    });
+                }
                 return (React.createElement(current[0], current[1], 
                             prev.length?React.createElement(prev[0],prev[1]):prev));
             });
