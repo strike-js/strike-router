@@ -64,7 +64,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
         return this.state.prevRoute;
     }
 
-    onRouteChange(prevRoute, nextRoute) {
+    onRouteChange(nextRoute, prevRoute) {
         this.setState({
             prevRoute,
             currentRoute: nextRoute
