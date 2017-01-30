@@ -133,8 +133,9 @@ export function parseRoute(route:string, hasChildren:boolean,
         if (stack.length === 0){
             inject(dataStore,innerChild[0],innerChild[1]);
             innerChild[1].routeParams = params;
-            return React.createElement(stack[0][0],stack[0][1]);
+            return React.createElement(innerChild[0],innerChild[1]);
         } else {
+            inject(dataStore,innerChild[0],innerChild[1]);
             return (stack as any).reduceRight((prev:any,current:any,a,b)=>{
                 if (prev && prev.length){
                     inject(dataStore,prev[0],prev[1]); 
@@ -142,9 +143,8 @@ export function parseRoute(route:string, hasChildren:boolean,
                 }
                 current[1].routeParams = params;
                 inject(dataStore,current[0],current[1]);
-                return (React.createElement(current[0], current[1], 
-                    prev.length?React.createElement(prev[0],prev[1]):prev));
-            });
+                return (React.createElement(current[0], current[1],prev));
+            },React.createElement(innerChild[0],innerChild[1]));
         }
     }
 
