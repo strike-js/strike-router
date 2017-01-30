@@ -49,6 +49,7 @@ export function parseRoute(route, hasChildren, elemProps, renderStack, isRedirec
     let routeParams = [];
     let params = {};
     let stack = renderStack.slice(0);
+    let innerChild = stack.pop();
     let routeData = null;
     let r = route.replace(/:([^\s\/]+):(number|string|boolean)/g, (e, k, v) => {
         routeParams.push([k, v]);
@@ -83,32 +84,32 @@ export function parseRoute(route, hasChildren, elemProps, renderStack, isRedirec
     function _isRedirect() {
         return isRedirect;
     }
+    function inject(dataStore, component, props) {
+        let $inject = component.$inject;
+        if (typeof $inject === "object" && $inject.length) {
+            $inject.forEach((e) => {
+                props[e] = dataStore.get(e);
+            });
+        }
+    }
     function render(dataStore) {
         if (isRedirect) {
             return null;
         }
         let $inject;
-        if (stack.length === 1) {
-            $inject = stack[0][0].$inject;
-            stack[0][1].routeParams = params;
-            if (typeof $inject === "object" && $inject.length) {
-                $inject.forEach((e) => {
-                    stack[0][1][e] = dataStore.get(e);
-                });
-            }
+        if (stack.length === 0) {
+            inject(dataStore, innerChild[0], innerChild[1]);
+            innerChild[1].routeParams = params;
             return React.createElement(stack[0][0], stack[0][1]);
         }
         else {
             return stack.reduceRight((prev, current, a, b) => {
-                let jj = prev.length ? prev[1] : null;
-                jj && (jj.routeParams = params);
-                current[1].routeParams = params;
-                $inject = current[0].$inject;
-                if (typeof $inject === "object" && $inject.length) {
-                    $inject.forEach((e) => {
-                        stack[0][1][e] = dataStore.get(e);
-                    });
+                if (prev && prev.length) {
+                    inject(dataStore, prev[0], prev[1]);
+                    prev[1].routeParams = params;
                 }
+                current[1].routeParams = params;
+                inject(dataStore, current[0], current[1]);
                 return (React.createElement(current[0], current[1], prev.length ? React.createElement(prev[0], prev[1]) : prev));
             });
         }
