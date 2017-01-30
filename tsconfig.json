@@ -1,10 +1,10 @@
 {
     "compilerOptions": {
         "rootDir": "./src",
-        "target": "es6",
-        "module": "es6",
+        "target": "es5",
+        "module": "commonjs",
         "jsx": "react",
-        "outDir": "./es6"
+        "outDir": "./lib"
     },
     "types": [
          "bluebird-global"

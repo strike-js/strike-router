@@ -14,7 +14,8 @@ export interface RouterProps{
     initialRoute?:string;
     history:RouteHistory; 
     pathSep?:string;
-    children:(router:Router)=>any;
+    rootPath?:string;
+    children:any;
     onRouteChange?(routeDef:RouteDef,params:Dictionary<any>):void;
 }
 
@@ -31,13 +32,15 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
     _routeIndices:Dictionary<number> = {};
     _activeRoute:RouteDef = null; 
     PATH_SEP:string;
-    constructor(props) {
+    constructor(props:RouterProps) {
         super(props);
         this.PATH_SEP = props.pathSep || '/';
         this._routeData = createDataStore();
         this.state = props.initialState || {
-          currentRoute:props.initialRoute || '',
+          currentRoute:props.initialRoute || props.history.currentRoute(),
         };
+        props.history.setDelegate(this);
+        
         traverse(props.children, this, [], props.rootPath || '');
     }
 

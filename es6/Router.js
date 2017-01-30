@@ -11,8 +11,9 @@ export class Router extends React.Component {
         this.PATH_SEP = props.pathSep || '/';
         this._routeData = createDataStore();
         this.state = props.initialState || {
-            currentRoute: props.initialRoute || '',
+            currentRoute: props.initialRoute || props.history.currentRoute(),
         };
+        props.history.setDelegate(this);
         traverse(props.children, this, [], props.rootPath || '');
     }
     setRouteData(data) {
