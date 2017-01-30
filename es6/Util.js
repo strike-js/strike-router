@@ -82,7 +82,7 @@ export function parseRoute(route, hasChildren, elemProps, renderStack, isRedirec
     function _isRedirect() {
         return isRedirect;
     }
-    function render() {
+    function render(data) {
         if (isRedirect) {
             return null;
         }
@@ -116,7 +116,7 @@ export function find(array, fn) {
     return null;
 }
 let countChildren = React.Children.count;
-export function traverse(children, router, renderStack, parentPath = '/') {
+export function traverse(children, router, renderStack, parentPath = '') {
     let pathSep = router.PATH_SEP;
     return React.Children.map(children, (child, index) => {
         let hasChildren = countChildren(child.props.children) > 0, childPath = child.props.path;
@@ -127,7 +127,7 @@ export function traverse(children, router, renderStack, parentPath = '/') {
         }
         let x = null;
         if (child.type === IndexRoute) {
-            x = router.routeDefFromPath([parentPath, ''].join(pathSep), false, child.props, renderStack);
+            x = router.routeDefFromPath(parentPath + pathSep + '?', false, child.props, renderStack);
         }
         else if (child.type === NotFoundRoute) {
             x = router.routeDefFromPath([parentPath, ':route:any'].join(pathSep), false, child.props, renderStack);

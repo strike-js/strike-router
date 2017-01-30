@@ -113,7 +113,7 @@ export function parseRoute(route:string, hasChildren:boolean, elemProps:any, ren
         return isRedirect;
     }
 
-    function render(){
+    function render(data?:any){
         if (isRedirect){
             return null;
         }
@@ -175,13 +175,14 @@ export interface IRouter extends RouteDataStore{
     getRouteDef(path:string):RouteDef; 
     getDataStore():DataStore;
     setGuard(guard:RouteGuard);
-    routeDefFromPath(path:string, hasChildren:boolean, props:any, renderStack:any[][],isRedirect?:boolean):RouteDef;
+    routeDefFromPath(path:string, hasChildren:boolean, 
+        props:any, renderStack:any[][], 
+        isRedirect?:boolean):RouteDef;
     PATH_SEP:string;
-
 }
 
 let countChildren = React.Children.count;
-export function traverse(children:React.ReactChild, router:IRouter, renderStack:any[][], parentPath = '/') {
+export function traverse(children:React.ReactChild, router:IRouter, renderStack:any[][], parentPath = '') {
     let pathSep = router.PATH_SEP;
     return React.Children.map(children, (child:any, index:number) => {
         let hasChildren = countChildren(child.props.children) > 0,
@@ -194,7 +195,7 @@ export function traverse(children:React.ReactChild, router:IRouter, renderStack:
         }
         let x = null; 
         if (child.type === IndexRoute) {
-            x = router.routeDefFromPath([parentPath,''].join(pathSep), false, child.props, renderStack);
+            x = router.routeDefFromPath(parentPath+pathSep+'?', false, child.props, renderStack);
         } else if (child.type === NotFoundRoute) {
             x = router.routeDefFromPath([parentPath, ':route:any'].join(pathSep), false, child.props, renderStack);
         } else if (child.type === Redirect && child.props.to && child.props.to.length > 0){
