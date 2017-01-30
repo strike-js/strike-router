@@ -1,7 +1,9 @@
 {
   "name": "strikejs-router",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A declarative router for ReactJS application. ",
+  "types":"strikejs-router.d.ts",
+  "typings":"strikejs-router.d.ts",
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -17,7 +19,6 @@
   },
   "homepage": "https://github.com/strike-js/strike-router#readme",
   "dependencies": {
-    "bluebird": "^3.4.7",
     "react": "^15.4.2",
     "react-dom": "^15.4.2"
   },
