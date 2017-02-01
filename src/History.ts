@@ -138,6 +138,9 @@ export function hashHistory():RouteHistory{
     function doBackNext(inc:number){
         enabled = false; 
         currentIndex += inc; 
+        if (location.hash.substr(1) === history[currentIndex]){
+            enabled = true;
+        }
         location.hash = history[currentIndex];
     }
 
@@ -146,6 +149,9 @@ export function hashHistory():RouteHistory{
         currentIndex++;
         history.splice(currentIndex)
         history.push(path);
+        if (location.hash.substr(1) === history[currentIndex]){
+            enabled = true;
+        }
         location.hash = history[currentIndex];
     }
 
