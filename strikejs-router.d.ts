@@ -265,7 +265,7 @@ declare module "strikejs-router"{
 
         getPrevRoute():string;
 
-        onRouteChange(nextRoute, prevRoute);
+        onRouteChange(currentRoute:string, prevRoute:string);
 
         getDataStore();
     

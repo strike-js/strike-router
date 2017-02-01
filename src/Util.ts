@@ -230,7 +230,7 @@ export function find<T>(array:T[],fn:(val:T,index:number)=>boolean){
 
 
 export interface RouteHistoryDelegate{
-    onRouteChange(prevRoute:string,nextRoute:string):void; 
+    onRouteChange(currentRoute:string,prevRoute:string):void; 
 }
 
 export interface DataStore{

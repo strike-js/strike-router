@@ -117,12 +117,10 @@ export function hashHistory():RouteHistory{
         if (enabled){
             currentIndex++;
             let newHash = location.hash.substr(1);
-            if (currentIndex === history.length){
-                history.push(newHash);
-            }else {
+            if (currentIndex < history.length){
                 history.splice(currentIndex);
-                history[currentIndex] = newHash; 
             }
+            history.push(newHash);
         }
         enabled = true;
         onChange();
@@ -134,6 +132,7 @@ export function hashHistory():RouteHistory{
 
     function setDelegate(del:RouteHistoryDelegate){
         delegate = del; 
+        delegate && delegate.onRouteChange(history[currentIndex],currentIndex > 0?history[currentIndex-1]:null);
     }
 
     function doBackNext(inc:number){

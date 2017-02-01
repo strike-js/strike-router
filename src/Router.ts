@@ -119,8 +119,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
         return this.state.prevRoute;
     }
 
-    onRouteChange(nextRoute, prevRoute) {
-        let currentRoute = this.state.currentRoute;
+    onRouteChange(currentRoute:string,prevRoute:string):void{
         let history = this.props.history;
         let z = find(this._routeDefs,(e, i) => {
             return e.test(currentRoute) !== null;
@@ -136,7 +135,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
                         this._activeRoute = z; 
                         this.setState({
                             prevRoute,
-                            currentRoute: nextRoute
+                            currentRoute
                         });    
                         return;
                     }
@@ -151,7 +150,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
             this._activeRoute = z; 
             this.setState({
                 prevRoute,
-                currentRoute: nextRoute
+                currentRoute
             });
         }
     }
