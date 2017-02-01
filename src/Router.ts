@@ -93,7 +93,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
           currentRoute:props.initialRoute || props.history.currentRoute(),
         };
         traverse(props.children, this, [], props.rootPath || '');
-        props.history.setDelegate(this);
+        
         if (this.state.currentRoute){
             props.history.goTo(this.state.currentRoute);
         }
@@ -199,9 +199,10 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
     }
 
     componentDidMount(){
-        if (this.props.onRouteChange){
-            this.props.onRouteChange(this._activeRoute,this._activeRoute.test(this.state.currentRoute));
-        }
+        // if (this.props.onRouteChange){
+        //     this.props.onRouteChange(this._activeRoute,this._activeRoute.test(this.state.currentRoute));
+        // }
+        this.props.history.setDelegate(this);
     }
 
     render() {
