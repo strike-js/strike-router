@@ -36,6 +36,7 @@ export interface RouterProps{
      * from one route to another. 
      */
     dataStore?:DataStore;
+    children?:any;
     /**
      * A callback to be called everytime the route changes. 
      * Useful for integration with Redux and StrikeJS applications. 
