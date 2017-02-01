@@ -92,8 +92,8 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
         this.state = props.initialState || {
           currentRoute:props.initialRoute || props.history.currentRoute(),
         };
-        props.history.setDelegate(this);
         traverse(props.children, this, [], props.rootPath || '');
+        props.history.setDelegate(this);
         if (this.state.currentRoute){
             props.history.goTo(this.state.currentRoute);
         }
