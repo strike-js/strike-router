@@ -121,10 +121,12 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
 
     onRouteChange(currentRoute:string,prevRoute:string):void{
         let history = this.props.history;
+        let params = null; 
         let z = find(this._routeDefs,(e, i) => {
-            return e.test(currentRoute) !== null;
+            return ((params = e.test(currentRoute)) !== null);
         });
         if (z){
+            this._routeData.set('routeParams',params);
             if (z.isRedirect){
                 history.goTo(z.props('to'));
                 return;
