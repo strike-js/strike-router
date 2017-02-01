@@ -127,7 +127,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
         let z = find(this._routeDefs,(e, i) => {
             return ((params = e.test(currentRoute)) !== null);
         });
-        if (z && z !== this._activeRoute){
+        if (z && (currentRoute !== prevRoute)){
             this._routeData.set('routeParams',params);
             active && active.onLeave && active.onLeave(dS,this); 
             if (z.isRedirect){
