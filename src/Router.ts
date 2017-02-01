@@ -132,7 +132,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
                 return;
             }else if (z.isAuth){
                 //@todo implement alternative view
-                z.auth(this,this._routeData,function(okay:boolean,redirectTo?:string,alternative?:any){
+                z.auth(this,this._routeData,(okay:boolean,redirectTo?:string,alternative?:any)=>{
                     if (okay){
                         this._activeRoute = z; 
                         this.setState({
