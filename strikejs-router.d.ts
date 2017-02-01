@@ -22,6 +22,8 @@ declare module "strikejs-router"{
         route:string;
         render(data?:any):any;
         auth:(router:IRouter,dataStore:DataStore,callback:AuthCallback)=>void;
+        onEnter?:(dataStore:DataStore,router:IRouter)=>void;
+        onLeave?:(dataStore:DataStore,router:IRouter)=>void;
     }
 
     export const TYPES_TO_PARSE:Dictionary<any>;
@@ -125,6 +127,8 @@ declare module "strikejs-router"{
         component?:React.ComponentClass<any>; 
         props?:any; 
         render?:(props:any)=>React.ReactElement<any>; 
+        onEnter?:(dataStore:DataStore,router:IRouter)=>void; 
+        onLeave?:(dataStore:DataStore,router:IRouter)=>void; 
     }
 
     export interface RouteProps extends BaseRouteProps{

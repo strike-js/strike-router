@@ -43,6 +43,8 @@ export interface RouteDef {
     route:string;
     render(data?:any):any;
     auth:(router:IRouter,dataStore:DataStore,callback:AuthCallback)=>void;
+    onEnter?:(dataStore:DataStore,router:IRouter)=>void;
+    onLeave?:(dataStore:DataStore,router:IRouter)=>void;
 }
 
 export const TYPES_TO_PARSE:Dictionary<any> = {
@@ -106,6 +108,8 @@ export interface RouteConfig {
     isRedirect:boolean; 
     isAuth:boolean;
     authenticate?:(router:IRouter,dataStore:DataStore,callback:AuthCallback)=>void;
+    onEnter?:(dataStore:DataStore,router:IRouter)=>void;
+    onLeave?:(dataStore:DataStore,router:IRouter)=>void;
 }
 
 export interface ParsedRoute {
@@ -209,6 +213,8 @@ export function createRouteDef(cfg:RouteConfig):RouteDef{
         route,
         data,
         auth,
+        onEnter:cfg.onEnter,
+        onLeave:cfg.onLeave,
         props:_props,
         isRedirect,
         isAuth,
@@ -278,7 +284,9 @@ export function traverse(children:React.ReactChild, router:IRouter, renderStack:
                 props:child.props,
                 renderStack,
                 isRedirect:false,
-                isAuth:false
+                isAuth:false,
+                onEnter:child.props.onEnter,
+                onLeave:child.props.onLeave
             });
         } else if (child.type === NotFoundRoute) {
             x = router.routeDefFromPath({
@@ -287,7 +295,9 @@ export function traverse(children:React.ReactChild, router:IRouter, renderStack:
                 props:child.props,
                 renderStack,
                 isRedirect:false,
-                isAuth:false
+                isAuth:false,
+                onEnter:child.props.onEnter,
+                onLeave:child.props.onLeave
             });
         } else if (child.type === Redirect && child.props.to && child.props.to.length > 0){
             x = router.routeDefFromPath({
@@ -296,7 +306,9 @@ export function traverse(children:React.ReactChild, router:IRouter, renderStack:
                 props:child.props,
                 renderStack,
                 isRedirect:true,
-                isAuth:false
+                isAuth:false,
+                onEnter:child.props.onEnter,
+                onLeave:child.props.onLeave
             });
         } else if (child.type === AuthRoute && child.props.auth){
             x = router.routeDefFromPath({
@@ -307,6 +319,8 @@ export function traverse(children:React.ReactChild, router:IRouter, renderStack:
                 isRedirect:false,
                 isAuth:true,
                 authenticate:child.props.auth,
+                onEnter:child.props.onEnter,
+                onLeave:child.props.onLeave
             });
         } else {
             x = router.routeDefFromPath({

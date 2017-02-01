@@ -26,6 +26,8 @@ export interface BaseRouteProps {
     component?:React.ComponentClass<any>; 
     props?:any; 
     render?:(props:any)=>React.ReactElement<any>; 
+    onEnter?:(dataStore:DataStore,router:IRouter)=>void; 
+    onLeave?:(dataStore:DataStore,router:IRouter)=>void; 
 }
 
 export interface RouteProps extends BaseRouteProps{

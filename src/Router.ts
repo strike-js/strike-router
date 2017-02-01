@@ -121,20 +121,26 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
 
     onRouteChange(currentRoute:string,prevRoute:string):void{
         let history = this.props.history;
+        let active = this._activeRoute;
+        let dS = this._routeData; 
         let params = null; 
         let z = find(this._routeDefs,(e, i) => {
             return ((params = e.test(currentRoute)) !== null);
         });
-        if (z){
+        if (z && z !== this._activeRoute){
             this._routeData.set('routeParams',params);
+            active.onLeave && active.onLeave(dS,this); 
             if (z.isRedirect){
+                this._activeRoute = z; 
+                z.onEnter && z.onEnter(dS,this);
                 history.goTo(z.props('to'));
                 return;
             }else if (z.isAuth){
                 //@todo implement alternative view
                 z.auth(this,this._routeData,(okay:boolean,redirectTo?:string,alternative?:any)=>{
                     if (okay){
-                        this._activeRoute = z; 
+                        this._activeRoute = z;
+                        z.onEnter && z.onEnter(dS,this);  
                         this.setState({
                             prevRoute,
                             currentRoute
@@ -150,6 +156,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
                 return;
             }
             this._activeRoute = z; 
+            z.onEnter && z.onEnter(dS,this);
             this.setState({
                 prevRoute,
                 currentRoute
