@@ -1,5 +1,5 @@
 import * as React from 'react'; 
-import {IndexRoute,NotFoundRoute,Redirect} from './Route'; 
+import {IndexRoute,NotFoundRoute,Redirect,AuthRoute} from './Route'; 
 export interface Dictionary<T>{
     [idx:string]:T;
 }
@@ -8,13 +8,41 @@ export function identity(v){
     return v;
 }
 
+export function getSet(obj:any){
+    return function(...args:any[]){
+        if (args.length === 0){
+            return obj; 
+        }else if (args.length === 1){
+            if (typeof args[0] === "string"){
+                return obj[args[0]]; 
+            }else if (typeof args[0] === "object" && 
+                !(args[0] instanceof Array)){
+                obj = {...obj,...args[0]};
+            }else if (typeof args[0] === "object" &&
+                args[0] instanceof Array){
+                return args[0].map((e)=>{
+                    return obj[e]; 
+                });
+            }
+        }else if (args.length === 2){
+            obj[args[0]] = args[1]; 
+            return 
+        }
+    }
+}
 
+export interface AuthCallback{
+    (okay:boolean,redirectTo?:string,alternativeView?:any):void;
+}
 export interface RouteDef {
     test(path:string):Dictionary<any>|null;
     data(data:any);
     props(...props:any[]);
-    isRedirect():boolean;
+    isRedirect:boolean;
+    isAuth:boolean;
+    route:string;
     render(data?:any):any;
+    auth:(router:IRouter,dataStore:DataStore,callback:AuthCallback)=>void;
 }
 
 export const TYPES_TO_PARSE:Dictionary<any> = {
@@ -70,26 +98,51 @@ export function getParamsFromMatches(params:string[][],matches:string[],route:st
     return data; 
 }
 
-export function parseRoute(route:string, hasChildren:boolean, 
-    elemProps:any, renderStack:any[][], isRedirect:boolean = false):RouteDef{
-    let routeParams = [];
+export interface RouteConfig {
+    route:string;
+    hasChildren:boolean; 
+    props:any;
+    renderStack:any[][],
+    isRedirect:boolean; 
+    isAuth:boolean;
+    authenticate?:(router:IRouter,dataStore:DataStore,callback:AuthCallback)=>void;
+}
+
+export interface ParsedRoute {
+    routeParams:[string,string][]; 
+    regex:string;
+}
+
+export function parseRoute(path:string):ParsedRoute{
+    let params:[string,string][] = []; 
+    let regex = path.replace(/:([^\s\/]+):(number|string|boolean)/g, (e, k, v) => {
+        params.push([k, v]);
+        return TYPES_TO_REGEX[v];
+    }).replace(/:([^\s\/]+)/g, (e, k) => {
+        params.push([k, "string"]);
+        return TYPES_TO_REGEX["string"];
+    });
+    
+    return {
+        regex,
+        routeParams:params,
+    };
+}
+
+export function createRouteDef(cfg:RouteConfig):RouteDef{
+    let {route,renderStack,authenticate,props,isRedirect,isAuth,hasChildren} = cfg; 
+    let {regex,routeParams} = parseRoute(route); 
     let params = {};
     let stack = renderStack.slice(0);
     let innerChild = stack.pop();
     let routeData = null;
-    let r = route.replace(/:([^\s\/]+):(number|string|boolean)/g, (e, k, v) => {
-        routeParams.push([k, v]);
-        return TYPES_TO_REGEX[v];
-    }).replace(/:([^\s\/]+)/g, (e, k) => {
-        routeParams.push([k, "string"]);
-        return TYPES_TO_REGEX["string"];
-    });
     if (hasChildren) {
-        r += ".*";
+        regex += ".*";
     }
+    let reg = new RegExp("^" + regex + "$", 'i');
 
     function debug(){
-        console.log(reg,r,stack);
+        console.log(reg,regex,stack);
     }
 
     function test(path) {
@@ -108,16 +161,13 @@ export function parseRoute(route:string, hasChildren:boolean,
         routeData = data;
     }
 
-    function props(key:string) {
-        return elemProps[key]; 
-    }
-
-    function _isRedirect(){
-        return isRedirect;
+    function _props(key:string) {
+        return props[key]; 
     }
 
     function inject(dataStore:DataStore,component:any,props:any){
         let $inject:string[] = component.$inject; 
+        props.routeParams = routeParams;
         if (typeof $inject === "object" && $inject.length){
             $inject.forEach((e)=>{
                 props[e] = dataStore.get(e);
@@ -132,26 +182,36 @@ export function parseRoute(route:string, hasChildren:boolean,
         let $inject:string[]; 
         if (stack.length === 0){
             inject(dataStore,innerChild[0],innerChild[1]);
-            innerChild[1].routeParams = params;
             return React.createElement(innerChild[0],innerChild[1]);
         } else {
             inject(dataStore,innerChild[0],innerChild[1]);
-            innerChild[1].routeParams = params;
             return (stack as any).reduceRight((prev:any,current:any,a,b)=>{
                 inject(dataStore,current[0],current[1]);
-                current[1].routeParams = params;
                 return (React.createElement(current[0], current[1],prev));
             },React.createElement(innerChild[0],innerChild[1]));
         }
     }
 
-    let reg = new RegExp("^" + r + "$", 'i');
+    function auth(router:IRouter,dataStore:DataStore,callback:AuthCallback){
+        if (isAuth){
+            if (authenticate){
+                authenticate(router,dataStore,callback);
+                return; 
+            }
+            callback(true);
+        }
+        callback(true);
+    }
+    
     var o = {
         debug,
         test,
+        route,
         data,
-        props,
-        isRedirect:_isRedirect,
+        auth,
+        props:_props,
+        isRedirect,
+        isAuth,
         render
     };
     return o;
@@ -193,9 +253,7 @@ export interface IRouter extends RouteDataStore{
     getRouteDef(path:string):RouteDef; 
     getDataStore():DataStore;
     setGuard(guard:RouteGuard);
-    routeDefFromPath(path:string, hasChildren:boolean, 
-        props:any, renderStack:any[][], 
-        isRedirect?:boolean):RouteDef;
+    routeDefFromPath(cfg:RouteConfig):RouteDef;
     PATH_SEP:string;
 }
 
@@ -214,13 +272,50 @@ export function traverse(children:React.ReactChild, router:IRouter, renderStack:
         }
         let x = null; 
         if (child.type === IndexRoute) {
-            x = router.routeDefFromPath(parentPath+pathSep+'?', false, child.props, renderStack);
+            x = router.routeDefFromPath({
+                route:parentPath+pathSep+'?', 
+                hasChildren:false,
+                props:child.props,
+                renderStack,
+                isRedirect:false,
+                isAuth:false
+            });
         } else if (child.type === NotFoundRoute) {
-            x = router.routeDefFromPath([parentPath, ':route:any'].join(pathSep), false, child.props, renderStack);
+            x = router.routeDefFromPath({
+                route:[parentPath, ':route:any'].join(pathSep),
+                hasChildren:false,
+                props:child.props,
+                renderStack,
+                isRedirect:false,
+                isAuth:false
+            });
         } else if (child.type === Redirect && child.props.to && child.props.to.length > 0){
-            x = router.routeDefFromPath([parentPath,childPath].join(pathSep), false, child.props, renderStack,true);
+            x = router.routeDefFromPath({
+                route:[parentPath,childPath].join(pathSep),
+                hasChildren:false,
+                props:child.props,
+                renderStack,
+                isRedirect:true,
+                isAuth:false
+            });
+        } else if (child.type === AuthRoute && child.props.auth){
+            x = router.routeDefFromPath({
+                route:[parentPath,childPath].join(pathSep),
+                hasChildren:hasChildren,
+                props:child.props,
+                renderStack,
+                isRedirect:false,
+                isAuth:true,
+                authenticate:child.props.auth,
+            });
         } else {
-            x = router.routeDefFromPath([parentPath,childPath].join(pathSep), false, child.props, renderStack);  
+            x = router.routeDefFromPath({
+                route:[parentPath,childPath].join(pathSep), 
+                hasChildren:hasChildren, 
+                props:child.props, 
+                renderStack,
+                isRedirect:false,
+                isAuth:false});  
         }
         renderStack.pop();
         return x;

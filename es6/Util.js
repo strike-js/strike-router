@@ -1,7 +1,41 @@
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
 import * as React from 'react';
-import { IndexRoute, NotFoundRoute, Redirect } from './Route';
+import { IndexRoute, NotFoundRoute, Redirect, AuthRoute } from './Route';
 export function identity(v) {
     return v;
+}
+export function getSet(obj) {
+    return function (...args) {
+        if (args.length === 0) {
+            return obj;
+        }
+        else if (args.length === 1) {
+            if (typeof args[0] === "string") {
+                return obj[args[0]];
+            }
+            else if (typeof args[0] === "object" &&
+                !(args[0] instanceof Array)) {
+                obj = __assign({}, obj, args[0]);
+            }
+            else if (typeof args[0] === "object" &&
+                args[0] instanceof Array) {
+                return args[0].map((e) => {
+                    return obj[e];
+                });
+            }
+        }
+        else if (args.length === 2) {
+            obj[args[0]] = args[1];
+            return;
+        }
+    };
 }
 export const TYPES_TO_PARSE = {
     "number": parseFloat,
@@ -45,24 +79,33 @@ export function getParamsFromMatches(params, matches, route, path) {
     }
     return data;
 }
-export function parseRoute(route, hasChildren, elemProps, renderStack, isRedirect = false) {
-    let routeParams = [];
+export function parseRoute(path) {
+    let params = [];
+    let regex = path.replace(/:([^\s\/]+):(number|string|boolean)/g, (e, k, v) => {
+        params.push([k, v]);
+        return TYPES_TO_REGEX[v];
+    }).replace(/:([^\s\/]+)/g, (e, k) => {
+        params.push([k, "string"]);
+        return TYPES_TO_REGEX["string"];
+    });
+    return {
+        regex,
+        routeParams: params,
+    };
+}
+export function createRouteDef(cfg) {
+    let { route, renderStack, authenticate, props, isRedirect, isAuth, hasChildren } = cfg;
+    let { regex, routeParams } = parseRoute(route);
     let params = {};
     let stack = renderStack.slice(0);
     let innerChild = stack.pop();
     let routeData = null;
-    let r = route.replace(/:([^\s\/]+):(number|string|boolean)/g, (e, k, v) => {
-        routeParams.push([k, v]);
-        return TYPES_TO_REGEX[v];
-    }).replace(/:([^\s\/]+)/g, (e, k) => {
-        routeParams.push([k, "string"]);
-        return TYPES_TO_REGEX["string"];
-    });
     if (hasChildren) {
-        r += ".*";
+        regex += ".*";
     }
+    let reg = new RegExp("^" + regex + "$", 'i');
     function debug() {
-        console.log(reg, r, stack);
+        console.log(reg, regex, stack);
     }
     function test(path) {
         reg.lastIndex = 0;
@@ -78,14 +121,12 @@ export function parseRoute(route, hasChildren, elemProps, renderStack, isRedirec
         }
         routeData = data;
     }
-    function props(key) {
-        return elemProps[key];
-    }
-    function _isRedirect() {
-        return isRedirect;
+    function _props(key) {
+        return props[key];
     }
     function inject(dataStore, component, props) {
         let $inject = component.$inject;
+        props.routeParams = routeParams;
         if (typeof $inject === "object" && $inject.length) {
             $inject.forEach((e) => {
                 props[e] = dataStore.get(e);
@@ -99,26 +140,35 @@ export function parseRoute(route, hasChildren, elemProps, renderStack, isRedirec
         let $inject;
         if (stack.length === 0) {
             inject(dataStore, innerChild[0], innerChild[1]);
-            innerChild[1].routeParams = params;
             return React.createElement(innerChild[0], innerChild[1]);
         }
         else {
             inject(dataStore, innerChild[0], innerChild[1]);
-            innerChild[1].routeParams = params;
             return stack.reduceRight((prev, current, a, b) => {
                 inject(dataStore, current[0], current[1]);
-                current[1].routeParams = params;
                 return (React.createElement(current[0], current[1], prev));
             }, React.createElement(innerChild[0], innerChild[1]));
         }
     }
-    let reg = new RegExp("^" + r + "$", 'i');
+    function auth(router, dataStore, callback) {
+        if (isAuth) {
+            if (authenticate) {
+                authenticate(router, dataStore, callback);
+                return;
+            }
+            callback(true);
+        }
+        callback(true);
+    }
     var o = {
         debug,
         test,
+        route,
         data,
-        props,
-        isRedirect: _isRedirect,
+        auth,
+        props: _props,
+        isRedirect,
+        isAuth,
         render
     };
     return o;
@@ -145,16 +195,55 @@ export function traverse(children, router, renderStack, parentPath = '') {
         }
         let x = null;
         if (child.type === IndexRoute) {
-            x = router.routeDefFromPath(parentPath + pathSep + '?', false, child.props, renderStack);
+            x = router.routeDefFromPath({
+                route: parentPath + pathSep + '?',
+                hasChildren: false,
+                props: child.props,
+                renderStack,
+                isRedirect: false,
+                isAuth: false
+            });
         }
         else if (child.type === NotFoundRoute) {
-            x = router.routeDefFromPath([parentPath, ':route:any'].join(pathSep), false, child.props, renderStack);
+            x = router.routeDefFromPath({
+                route: [parentPath, ':route:any'].join(pathSep),
+                hasChildren: false,
+                props: child.props,
+                renderStack,
+                isRedirect: false,
+                isAuth: false
+            });
         }
         else if (child.type === Redirect && child.props.to && child.props.to.length > 0) {
-            x = router.routeDefFromPath([parentPath, childPath].join(pathSep), false, child.props, renderStack, true);
+            x = router.routeDefFromPath({
+                route: [parentPath, childPath].join(pathSep),
+                hasChildren: false,
+                props: child.props,
+                renderStack,
+                isRedirect: true,
+                isAuth: false
+            });
+        }
+        else if (child.type === AuthRoute && child.props.auth) {
+            x = router.routeDefFromPath({
+                route: [parentPath, childPath].join(pathSep),
+                hasChildren: hasChildren,
+                props: child.props,
+                renderStack,
+                isRedirect: false,
+                isAuth: true,
+                authenticate: child.props.auth,
+            });
         }
         else {
-            x = router.routeDefFromPath([parentPath, childPath].join(pathSep), false, child.props, renderStack);
+            x = router.routeDefFromPath({
+                route: [parentPath, childPath].join(pathSep),
+                hasChildren: hasChildren,
+                props: child.props,
+                renderStack,
+                isRedirect: false,
+                isAuth: false
+            });
         }
         renderStack.pop();
         return x;

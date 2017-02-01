@@ -1,4 +1,10 @@
-import {RouteGuard,RouteHistoryDelegate} from './Util';
+import {RouteGuard,RouteHistoryDelegate,RouteDef,Dictionary,IRouter} from './Util';
+import {Constraint} from './Route';
+
+export interface Middleware {
+    (route:RouteDef,router:IRouter,next:(okay:boolean)=>void):void; 
+}
+
 export interface RouteHistory {
     history:string[]; 
     back();
@@ -8,6 +14,95 @@ export interface RouteHistory {
     goTo(newRoute:string);
     setGuard(guard:RouteGuard):void;
     setDelegate(delegate:RouteHistoryDelegate); 
+}
+
+export function memoryHistory(initialRoute?:string):RouteHistory{
+    let currentIndex:number = 0,
+        guard:RouteGuard = null, 
+        history:string[] = [initialRoute || '/'],
+        enabled:boolean = true,
+        delegate:RouteHistoryDelegate = null;
+
+    function setDelegate(del:RouteHistoryDelegate){
+        delegate = del; 
+    }
+
+    function doBackNext(inc:number){
+        enabled = false; 
+        currentIndex += inc; 
+        location.hash = history[currentIndex];
+    }
+
+    function doGoTo(path:string){
+        enabled = false; 
+        currentIndex++;
+        history.splice(currentIndex)
+        history.push(path);
+        location.hash = history[currentIndex];
+    }
+
+    function change(inc:number){
+        let v = guard && guard.check(); 
+        if (typeof v === "object" && v && v.then){
+            v.then((okay)=>{
+                if (okay){
+                    doBackNext(inc);
+                }
+            })
+        }else if ((typeof v === "boolean" && v) || !guard){
+            doBackNext(inc);
+        }
+    }
+
+    function back(){ 
+        if (currentIndex > 0){
+            change(-1);
+        }
+    }
+
+    function next(){
+        if (currentIndex < (history.length-1)){
+            change(1);
+        }
+    }
+
+    function goTo(path:string){
+        if (guard){
+            let v = guard.check(); 
+            if (typeof v === "object" && v && v.then){
+                v.then((okay)=>{
+                    if (okay){
+                        doGoTo(path);
+                    }
+                })
+                return; 
+            }
+        }
+        doGoTo(path);        
+    }
+
+    function prevRoute(){
+        return currentIndex > 0?history[currentIndex-1]:null;
+    }
+
+    function currentRoute(){
+        return history[currentIndex]; 
+    }
+
+    function setGuard(g:RouteGuard){
+        guard = g;
+    }
+
+    return {
+        setDelegate,
+        currentRoute,
+        prevRoute,
+        history,
+        back,
+        next,
+        goTo,
+        setGuard,
+    }
 }
 
 export function hashHistory():RouteHistory{

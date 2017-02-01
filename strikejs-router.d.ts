@@ -1,22 +1,58 @@
 declare module "strikejs-router"{
     import * as React from 'react'; 
+
     export interface Dictionary<T>{
         [idx:string]:T;
     }
 
-    export function identity(v:any):any;
+    export function identity(v);
 
+    export function getSet(obj:any):(...args:any[])=>any;
+
+    export interface AuthCallback{
+        (okay:boolean,redirectTo?:string,alternativeView?:any):void;
+    }
 
     export interface RouteDef {
         test(path:string):Dictionary<any>|null;
         data(data:any);
         props(...props:any[]);
-        isRedirect():boolean;
-        render():any;
+        isRedirect:boolean;
+        isAuth:boolean;
+        route:string;
+        render(data?:any):any;
+        auth:(router:IRouter,dataStore:DataStore,callback:AuthCallback)=>void;
     }
 
+    export const TYPES_TO_PARSE:Dictionary<any>;
+
+
+    export const TYPES_TO_REGEX;
+
+
+
     export function createDataStore():DataStore;
-    export function find<T>(array:T[],fn:(val:T,index:number)=>boolean);
+
+    export interface RouteConfig {
+        route:string;
+        hasChildren:boolean; 
+        props:any;
+        renderStack:any[][],
+        isRedirect:boolean; 
+        isAuth:boolean;
+        authenticate?:(router:IRouter,dataStore:DataStore,callback:AuthCallback)=>void;
+    }
+
+    export interface ParsedRoute {
+        routeParams:[string,string][]; 
+        regex:string;
+    }
+
+    export function parseRoute(path:string):ParsedRoute;
+
+    export function createRouteDef(cfg:RouteConfig):RouteDef;
+
+    export function find<T>(array:T[],fn:(val:T,index:number)=>boolean):T|null;
 
 
     export interface RouteHistoryDelegate{
@@ -43,11 +79,10 @@ declare module "strikejs-router"{
         getRouteDef(path:string):RouteDef; 
         getDataStore():DataStore;
         setGuard(guard:RouteGuard);
-        routeDefFromPath(path:string, hasChildren:boolean, props:any, renderStack:any[][],isRedirect?:boolean):RouteDef;
+        routeDefFromPath(cfg:RouteConfig):RouteDef;
         PATH_SEP:string;
-
     }
-
+    
     export interface RouteHistory {
         history:string[]; 
         back();
@@ -59,33 +94,71 @@ declare module "strikejs-router"{
         setDelegate(delegate:RouteHistoryDelegate); 
     }
 
-    export interface RouteProps{
-        path:string;
+    export function memoryHistory(initialRoute?:string):RouteHistory;
+
+    export function hashHistory():RouteHistory;
+
+    export function popStateHistory(root:string):RouteHistory;
+
+    export interface RedirectFn{
+        (to:string,hard?:boolean):void; 
+    }
+
+    export interface OkayFn{
+        ():void;
+    }
+
+    export interface RenderFn{
+        (el:React.ReactElement<any>):void; 
+    }
+
+    export interface NextFn{
+        ():void;
+    }
+
+    export interface Constraint{
+        (routeParams:Dictionary<any>, redirect:RedirectFn, okay:OkayFn, render:RenderFn, next:NextFn):void; 
+    }
+
+    export interface BaseRouteProps {
+        constraints?:Constraint[];
         component?:React.ComponentClass<any>; 
         props?:any; 
         render?:(props:any)=>React.ReactElement<any>; 
+    }
+
+    export interface RouteProps extends BaseRouteProps{
+        children?:any;
+        path:string;
+    }
+
+    export interface AuthRouteProps extends BaseRouteProps{
+        auth:(router:IRouter,dataStore:DataStore,callback:AuthCallback)=>void;
+    }
+
+    export interface IndexRouteProps extends BaseRouteProps{
+
+    }
+
+    export interface NotFoundRouteProps extends BaseRouteProps{
+        
     }
 
     export interface RouteState {
 
     }
 
-    interface RedirectRouteProps extends RouteProps{
+    export interface RedirectRouteProps extends RouteProps{
         hard?:boolean; 
         to:string;
     }
 
+    export interface AuthRouteState{
 
-    export interface IndexRouteProps{
-        component?:React.ComponentClass<any>; 
-        props?:any; 
-        render?:(props:any)=>React.ReactElement<any>; 
     }
 
-    export interface NotFoundRouteProps{
-        component?:React.ComponentClass<any>; 
-        props?:any; 
-        render?:(props:any)=>React.ReactElement<any>; 
+    export class AuthRoute extends React.Component<AuthRouteProps,AuthRouteState>{
+        constructor(props);
     }
 
     export class Route extends React.Component<RouteProps,RouteState> {
@@ -93,8 +166,9 @@ declare module "strikejs-router"{
     }
 
     export class IndexRoute extends React.Component<IndexRouteProps,RouteState> {
-        constructor(props) ;
+        constructor(props);
     }
+
     export class NotFoundRoute extends React.Component<NotFoundRouteProps,RouteState> {
         constructor(props);
     }
@@ -103,52 +177,107 @@ declare module "strikejs-router"{
         constructor(props);
     }
 
-    export function hashHistory():RouteHistory;
-    export function popStateHistory(root:string):RouteHistory;
-
     export interface RouterProps{
+        /**
+         * The initial state of the {Router} this is useful to set the initial route of the router 
+         */
         initialState?:RouterState;
+        /**
+         * The initial route to go to (otherwise the currentRoute will be set to whatever the history object is at). 
+         */
         initialRoute?:string;
+        /**
+         * The underlying history manager. 
+         */
         history:RouteHistory; 
+        /**
+         * The path separator to use, defaults '/' 
+         */
         pathSep?:string;
+        /**
+         * The root path to resolve all paths to. 
+         */
+        rootPath?:string;
+        /**
+         * A data store to store data from routes, this can also be used to pass data 
+         * from one route to another. 
+         */
         dataStore?:DataStore;
+        children:any;
+        /**
+         * A callback to be called everytime the route changes. 
+         * Useful for integration with Redux and StrikeJS applications. 
+         */
         onRouteChange?(routeDef:RouteDef,params:Dictionary<any>):void;
     }
 
+    /**
+     * @name RouterState
+     * @description The Router State interface to provide static typing for Router's state. 
+     */
     export interface RouterState{
-        currentRoute?:string; 
+        /**
+         * The current route 
+         */
+        currentRoute?:string;
+        /**
+         * The previous route. 
+         */
         prevRoute?:string; 
     }
 
     export class Router extends React.Component<RouterProps,RouterState> implements IRouter{
+        /**
+         * 
+         */
         _doneSetup:boolean;
+        /**
+         * 
+         */
         _routeData:DataStore;
+        /**
+         * 
+         */
         _routeDefs:RouteDef[];
+        /**
+         * 
+         */
         _pendingRedirect:RouteDef;
+        /**
+         * 
+         */
         _routeIndices:Dictionary<number>;
+        /**
+         * 
+         */
         _activeRoute:RouteDef;
         PATH_SEP:string;
-        constructor(props);
+        constructor(props:RouterProps);
 
-        setRouteData(data:any,atKey?:string):void;
+        setRouteData(data:any,atKey?:string);
 
-        getRouteData(key?:string):any;
+        getRouteData(atKey?:string);
 
-        getDataForRoute(route);
+        getDataForRoute(route:string);
 
         getCurrentRoute():string;
 
         getPrevRoute():string;
 
-        onRouteChange(prevRoute, nextRoute);
+        onRouteChange(nextRoute, prevRoute);
 
         getDataStore();
     
         getRouteDef(path):RouteDef;
 
-        routeDefFromPath(path:string, hasChildren:boolean, props:any, renderStack:any[][]):RouteDef;
+        routeDefFromPath(cfg:RouteConfig):RouteDef;
 
         setGuard(guard:RouteGuard);
 
+        _checkRedirect();
+
+        componentDidUpdate(prevProps:RouterProps,prevState:RouterState);
+
+        componentDidMount();
     }
 }

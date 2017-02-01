@@ -1,3 +1,77 @@
+export function memoryHistory(initialRoute) {
+    let currentIndex = 0, guard = null, history = [initialRoute || '/'], enabled = true, delegate = null;
+    function setDelegate(del) {
+        delegate = del;
+    }
+    function doBackNext(inc) {
+        enabled = false;
+        currentIndex += inc;
+        location.hash = history[currentIndex];
+    }
+    function doGoTo(path) {
+        enabled = false;
+        currentIndex++;
+        history.splice(currentIndex);
+        history.push(path);
+        location.hash = history[currentIndex];
+    }
+    function change(inc) {
+        let v = guard && guard.check();
+        if (typeof v === "object" && v && v.then) {
+            v.then((okay) => {
+                if (okay) {
+                    doBackNext(inc);
+                }
+            });
+        }
+        else if ((typeof v === "boolean" && v) || !guard) {
+            doBackNext(inc);
+        }
+    }
+    function back() {
+        if (currentIndex > 0) {
+            change(-1);
+        }
+    }
+    function next() {
+        if (currentIndex < (history.length - 1)) {
+            change(1);
+        }
+    }
+    function goTo(path) {
+        if (guard) {
+            let v = guard.check();
+            if (typeof v === "object" && v && v.then) {
+                v.then((okay) => {
+                    if (okay) {
+                        doGoTo(path);
+                    }
+                });
+                return;
+            }
+        }
+        doGoTo(path);
+    }
+    function prevRoute() {
+        return currentIndex > 0 ? history[currentIndex - 1] : null;
+    }
+    function currentRoute() {
+        return history[currentIndex];
+    }
+    function setGuard(g) {
+        guard = g;
+    }
+    return {
+        setDelegate,
+        currentRoute,
+        prevRoute,
+        history,
+        back,
+        next,
+        goTo,
+        setGuard,
+    };
+}
 export function hashHistory() {
     let currentIndex = 0, guard = null, history = [location.hash.substr(1)], enabled = true, delegate = null;
     window.addEventListener('hashchange', onHashChange);
