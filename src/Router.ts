@@ -129,7 +129,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
         });
         if (z && z !== this._activeRoute){
             this._routeData.set('routeParams',params);
-            active.onLeave && active.onLeave(dS,this); 
+            active && active.onLeave && active.onLeave(dS,this); 
             if (z.isRedirect){
                 this._activeRoute = z; 
                 z.onEnter && z.onEnter(dS,this);
