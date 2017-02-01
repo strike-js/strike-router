@@ -134,6 +134,7 @@ declare module "strikejs-router"{
 
     export interface AuthRouteProps extends BaseRouteProps{
         auth:(router:IRouter,dataStore:DataStore,callback:AuthCallback)=>void;
+        path:string;
     }
 
     export interface IndexRouteProps extends BaseRouteProps{

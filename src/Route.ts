@@ -35,6 +35,7 @@ export interface RouteProps extends BaseRouteProps{
 
 export interface AuthRouteProps extends BaseRouteProps{
     auth:(router:IRouter,dataStore:DataStore,callback:AuthCallback)=>void;
+    path:string;
 }
 
 export interface IndexRouteProps extends BaseRouteProps{
@@ -52,6 +53,7 @@ export interface RouteState {
 export interface RedirectRouteProps extends RouteProps{
     hard?:boolean; 
     to:string;
+    
 }
 
 export interface AuthRouteState{
