@@ -146,9 +146,11 @@ export function hashHistory():RouteHistory{
 
     function doGoTo(path:string){
         enabled = false; 
-        currentIndex++;
-        history.splice(currentIndex)
-        history.push(path);
+        if (path !== history[currentIndex]){
+            currentIndex++;
+            history.splice(currentIndex)
+            history.push(path);
+        }
         if (location.hash.substr(1) === history[currentIndex]){
             enabled = true;
         }
@@ -181,18 +183,17 @@ export function hashHistory():RouteHistory{
     }
 
     function goTo(path:string){
-        if (guard){
-            let v = guard.check(); 
-            if (typeof v === "object" && v && v.then){
-                v.then((okay)=>{
-                    if (okay){
-                        doGoTo(path);
-                    }
-                })
-                return; 
-            }
-        }
-        doGoTo(path);        
+        let v = guard && guard.check(); 
+        if (typeof v === "object" && v && v.then){
+            v.then((okay)=>{
+                if (okay){
+                    doGoTo(path);
+                }
+            })
+            return; 
+        }else if ((typeof v === "boolean" && v) || !guard){
+            doGoTo(path);
+        }    
     }
 
     function prevRoute(){
