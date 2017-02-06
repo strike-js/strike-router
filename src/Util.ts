@@ -1,13 +1,26 @@
 import * as React from 'react'; 
 import {IndexRoute,NotFoundRoute,Redirect,AuthRoute} from './Route'; 
+
+/**
+ * A generic dictionary interface.
+ */
 export interface Dictionary<T>{
     [idx:string]:T;
 }
 
+
+/**
+ * An identity function i.e. returns whatever it receives in its first paramters. 
+ */
 export function identity(v){
     return v;
 }
 
+/**
+ * A getter setter generator. 
+ * Given an object, it returns a function that can be used to get 
+ * or set properties of the object. 
+ */
 export function getSet(obj:any){
     return function(...args:any[]){
         if (args.length === 0){
@@ -31,11 +44,24 @@ export function getSet(obj:any){
     }
 }
 
+/**
+ * A callback to be called in auth route. 
+ */
 export interface AuthCallback{
     (okay:boolean,redirectTo?:string,alternativeView?:any):void;
 }
+
+/**
+ * Represents a compiled route in the application. 
+ */
 export interface RouteDef {
+    /**
+     * Tests whether a given path is part of the application. 
+     */
     test(path:string):Dictionary<any>|null;
+    /**
+     * Sets the data of 
+     */
     data(data:any);
     props(...props:any[]);
     isRedirect:boolean;
@@ -67,9 +93,10 @@ export const TYPES_TO_REGEX = {
     "alphanumeric": '([a-zA-Z0-9]+)',
 };
 
-
-
-export function createDataStore(){
+/**
+ * Creates a simple local {@link DataStore}.
+ */
+export function createDataStore():DataStore{
     var data:Dictionary<any> = {}; 
     function get(key:string){
         return data[key]; 
@@ -100,15 +127,46 @@ export function getParamsFromMatches(params:string[][],matches:string[],route:st
     return data; 
 }
 
+/**
+ * Route configuration.
+ */
 export interface RouteConfig {
+    /**
+     * The route.
+     */
     route:string;
+    /**
+     * Whether the route has children or not. 
+     */
     hasChildren:boolean; 
+    /**
+     * The props passed to the route. 
+     */
     props:any;
-    renderStack:any[][],
+    /**
+     * The render stack at this given route. 
+     */
+    renderStack:any[][];
+    /**
+     * Whether the route is a redirect route. 
+     */
     isRedirect:boolean; 
+    /**
+     * Whether the route is an auth route.
+     */
     isAuth:boolean;
+    /**
+     * An authentication callback to be called by the router to check if the 
+     * user is allowed to access the route. 
+     */
     authenticate?:(router:IRouter,dataStore:DataStore,callback:AuthCallback)=>void;
+    /**
+     * A callback to be called when the route is about to be renderd.
+     */
     onEnter?:(dataStore:DataStore,router:IRouter)=>void;
+    /**
+     * A callback to be called when the route is about to leave. 
+     */
     onLeave?:(dataStore:DataStore,router:IRouter)=>void;
 }
 
@@ -117,6 +175,11 @@ export interface ParsedRoute {
     regex:string;
 }
 
+/**
+ * Parases a route with path parameters.
+ * @param {string} path the path to parse.
+ * @returns {ParsedRoute} the parsed route. 
+ */
 export function parseRoute(path:string):ParsedRoute{
     let params:[string,string][] = []; 
     let regex = path.replace(/:([^\s\/]+):(number|string|boolean)/g, (e, k, v) => {
@@ -134,6 +197,7 @@ export function parseRoute(path:string):ParsedRoute{
 }
 
 export function createRouteDef(cfg:RouteConfig):RouteDef{
+    cfg.route = cfg.route.replace(/[\/]{2,}/g,'/');
     let {route,renderStack,authenticate,props,isRedirect,isAuth,hasChildren} = cfg; 
     let {regex,routeParams} = parseRoute(route); 
     let params = {};
@@ -223,7 +287,20 @@ export function createRouteDef(cfg:RouteConfig):RouteDef{
     return o;
 }
 
-export function find<T>(array:T[],fn:(val:T,index:number)=>boolean){
+/**
+ * An iterator callback.
+ */
+export interface IteratorCallback<T>{
+    (val:T,index:number):boolean; 
+}
+
+/**
+ * An implementation of the ES6 find method. 
+ * @param {T[]} array the array to loop through. 
+ * @param {IteratorCallback<T>} fn the iterator to call on every item in 
+ * the array up until the method returns a truthful value.
+ */
+export function find<T>(array:T[],fn:(val:T,index:number)=>boolean):T|null{
     let i = 0,
         l = array.length; 
     for(;i<l;i++){
@@ -234,31 +311,76 @@ export function find<T>(array:T[],fn:(val:T,index:number)=>boolean){
     return null;
 }
 
-
+/**
+ * An interface for a delegate that can listen to route changes. 
+ */
 export interface RouteHistoryDelegate{
     onRouteChange(currentRoute:string,prevRoute:string):void; 
 }
 
+/**
+ * An interface for a {@link DataStore}.
+ */
 export interface DataStore{
+    /**
+     * Returns data stored at a given path.
+     * @param {string} key the key to get the data at. 
+     * @returns {any} the data at the given key.
+     */
     get(key:string):any;
+    /**
+     * Sets data at a given path. 
+     * @param {string} key the key to set the data at.
+     * @param {any} val the data to store.
+     */
     set(key:string,val:any):void;
 }
 
+/**
+ * A data store to be used by an {@link IRouter}.
+ */
 export interface RouteDataStore{
     setRouteData(data:any,atKey?:string):void;
     getRouteData(atKey?:string):any;
 }
 
+/**
+ * A route guard callback, this callback will be queried by the {@link IRouter}
+ * instance to check whether the current route can be changed or not. 
+ */
 export interface RouteGuard {
     check(path?:string):boolean|Promise<boolean>;
 }
 
+/**
+ * An interface implemented by the {@link Router}.
+ */
 export interface IRouter extends RouteDataStore{
+    /**
+     * Returns the current route. 
+     */
     getCurrentRoute():string;
+    /**
+     * Returns the previous route. 
+     */
     getPrevRoute():string;
+    /**
+     * Get the {@link RouteDef} of the current route. 
+     */
     getRouteDef(path:string):RouteDef; 
+    /**
+     * Get the {@link DataStore} of the router.
+     */
     getDataStore():DataStore;
+    /**
+     * Sets a {@link RouteGuard} on the current route. 
+     * @param {RouteGuard} guard the guard to use. 
+     */
     setGuard(guard:RouteGuard);
+    /**
+     * Creates a route definition given a {@link RouteConfig}.
+     * @returns {RouteDef}
+     */
     routeDefFromPath(cfg:RouteConfig):RouteDef;
     PATH_SEP:string;
 }

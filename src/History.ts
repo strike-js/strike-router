@@ -5,14 +5,45 @@ export interface Middleware {
     (route:RouteDef,router:IRouter,next:(okay:boolean)=>void):void; 
 }
 
+/**
+ * Interface that must be implemented by navigation history tracking classes.  
+ */
 export interface RouteHistory {
+    /**
+     * A list representing the navigation history of the user. 
+     */
     history:string[]; 
+    /**
+     * Go one entry back in the navigation history. 
+     */
     back();
+    /**
+     * Go one entry forward in the navigation history. 
+     */
     next(); 
+    /**
+     * Get the previous route if there is one, null otherwise. 
+     */
     prevRoute():string;
+    /**
+     * Get the current route. 
+     */
     currentRoute():string;
+    /**
+     * Go to a given route. 
+     * @param {string} newRoute the new route to go to 
+     */
     goTo(newRoute:string);
+    /**
+     * Sets a guard on the current route such that navigation away can only 
+     * happen if the guard allows it. 
+     * @param {RouteGuard} guard the guard to secure the current route. 
+     */
     setGuard(guard:RouteGuard):void;
+    /**
+     * Sets the delegate that will receive the route change events. 
+     * @param {RouteHistoryDelegate} delegate the delegate to notify.
+     */
     setDelegate(delegate:RouteHistoryDelegate); 
 }
 
@@ -105,6 +136,9 @@ export function memoryHistory(initialRoute?:string):RouteHistory{
     }
 }
 
+/**
+ * Creates a history that tracks and manages hash changes. 
+ */
 export function hashHistory():RouteHistory{
     let currentIndex:number = 0,
         guard:RouteGuard = null,
@@ -220,7 +254,9 @@ export function hashHistory():RouteHistory{
     }
 }
 
-
+/**
+ * Creates a history that tracks and manages pop state history. 
+ */
 export function popStateHistory(root:string):RouteHistory{
     let enabled:boolean = true,
         currentIndex = 0,
