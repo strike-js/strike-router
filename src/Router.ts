@@ -138,7 +138,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
         return this.state.prevRoute;
     }
 
-    onRouteChange(currentRoute:string,prevRoute:string):void{
+    _handleRouteChange(currentRoute:string,prevRoute:string):void{
         let history = this.props.history;
         let active = this._activeRoute;
         let dS = this._routeData; 
@@ -184,6 +184,24 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
         }
     }
 
+    onRouteChange(currentRoute:string,prevRoute:string):void{
+        if (this.guard){
+            this.guard(currentRoute).then((okay)=>{
+                if (okay){
+                    this.guard = null; 
+                    this._handleRouteChange(currentRoute,prevRoute); 
+                    return; 
+                }
+                this.props.history.back();
+            },()=>{
+                this.props.history.back();
+            })
+            return; 
+        }
+        this._handleRouteChange(currentRoute,prevRoute); 
+
+    }
+
     /**
      * Returns the data store of the router. 
      * @returns {DataStore} the data store of the router.
@@ -223,7 +241,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
      */
     setGuard(guard:RouteGuard) {
         this.guard = guard; 
-        this.props.history.setGuard(guard);
+        // this.props.history.setGuard(guard);
     }
 
     _checkRedirect(){

@@ -175,23 +175,7 @@ export function hashHistory():RouteHistory{
     }
 
     function onHashChange(){
-        let newRoute = location.hash.slice(1); 
         if (enabled){
-            if (guard){
-                guard(newRoute)
-                    .then((okay)=>{
-                        if (okay){
-                            acceptHashChange();
-                            return; 
-                        }
-                        enabled = false; 
-                        location.hash = currentRoute(); 
-                    },()=>{
-                        enabled = false; 
-                        location.hash = currentRoute(); 
-                    });
-                return; 
-            }
             acceptHashChange();
         }
         enabled = true;
@@ -231,17 +215,6 @@ export function hashHistory():RouteHistory{
     }
 
     function change(inc:number){
-        if (guard){
-            guard(routeAt(currentIndex+inc))
-            .then((okay)=>{
-                if (okay){
-                    doBackNext(inc); 
-                }
-            },()=>{
-               return false; 
-            });
-            return;
-        }
         doBackNext(inc);
     }
 
@@ -258,16 +231,6 @@ export function hashHistory():RouteHistory{
     }
 
     function goTo(path:string){
-        if (guard){
-            guard(path).then((okay)=>{
-                if (okay){
-                    doGoTo(path); 
-                }
-            },()=>{
-                return false; 
-            });
-            return;
-        }
         doGoTo(path); 
     }
 
