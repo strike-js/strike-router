@@ -349,7 +349,7 @@ export interface RouteDataStore{
  * instance to check whether the current route can be changed or not. 
  */
 export interface RouteGuard {
-    check(path?:string):boolean|Promise<boolean>;
+    (toPath:string):Promise<boolean>;
 }
 
 /**

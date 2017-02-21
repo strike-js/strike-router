@@ -60,6 +60,8 @@ export interface RouterState{
 }
 
 export class Router extends React.Component<RouterProps,RouterState> implements IRouter{
+    guard:RouteGuard; 
+
     /**
      * 
      */
@@ -220,6 +222,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
      * @param {RouteGuard} guard the guard to protect the current route. 
      */
     setGuard(guard:RouteGuard) {
+        this.guard = guard; 
         this.props.history.setGuard(guard);
     }
 

@@ -72,7 +72,7 @@ declare module "strikejs-router"{
     }
 
     export interface RouteGuard {
-        check(path?:string):boolean|Promise<boolean>;
+        (path:string):Promise<boolean>;
     }
 
     export interface IRouter extends RouteDataStore{

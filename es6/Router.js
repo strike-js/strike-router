@@ -28,50 +28,72 @@ export class Router extends React.Component {
         this.state = props.initialState || {
             currentRoute: props.initialRoute || props.history.currentRoute(),
         };
-        props.history.setDelegate(this);
         traverse(props.children, this, [], props.rootPath || '');
         if (this.state.currentRoute) {
             props.history.goTo(this.state.currentRoute);
         }
     }
+    /**
+     * Sets the data at a given key or at the current route.
+     * @param {any} data the data to store.
+     * @param {string} [atKey] the key to store the data at. If not
+     * provided, the current route path will be used instead.
+     */
     setRouteData(data, atKey) {
         this._routeData.set(atKey ? atKey : this.state.currentRoute, data);
     }
+    /**
+     * Returns the data at the current route or at a given key.
+     * @param {string} [atKey] the key to get the data at.
+     */
     getRouteData(atKey) {
         return this._routeData.get(atKey ? atKey : this.state.currentRoute);
     }
-    getDataForRoute(route) {
-        return this._routeData.get(route);
-    }
+    /**
+     * Get the current route.
+     * @returns {string} the current route.
+     */
     getCurrentRoute() {
         return this.state.currentRoute;
     }
+    /**
+     * Get the previous route.
+     * @returns {string} the previous route.
+     */
     getPrevRoute() {
         return this.state.prevRoute;
     }
-    onRouteChange(nextRoute, prevRoute) {
-        let currentRoute = this.state.currentRoute;
+    onRouteChange(currentRoute, prevRoute) {
         let history = this.props.history;
+        let active = this._activeRoute;
+        let dS = this._routeData;
+        let params = null;
         let z = find(this._routeDefs, (e, i) => {
-            return e.test(currentRoute) !== null;
+            return ((params = e.test(currentRoute)) !== null);
         });
-        if (z) {
+        if (z && (currentRoute !== prevRoute)) {
+            this._routeData.set('routeParams', params);
+            active && active.onLeave && active.onLeave(dS, this);
             if (z.isRedirect) {
+                this._activeRoute = z;
+                z.onEnter && z.onEnter(dS, this);
                 history.goTo(z.props('to'));
                 return;
             }
             else if (z.isAuth) {
                 //@todo implement alternative view
-                z.auth(this, this._routeData, function (okay, redirectTo, alternative) {
+                z.auth(this, this._routeData, (okay, redirectTo, alternative) => {
                     if (okay) {
                         this._activeRoute = z;
+                        z.onEnter && z.onEnter(dS, this);
                         this.setState({
                             prevRoute,
-                            currentRoute: nextRoute
+                            currentRoute
                         });
                         return;
                     }
-                    if (redirectTo && typeof redirectTo === "string") {
+                    let redirectRoute = (typeof redirectTo === "string" && redirectTo) || z.props("redirectTo");
+                    if (redirectRoute) {
                         history.goTo(redirectTo);
                         return;
                     }
@@ -80,18 +102,32 @@ export class Router extends React.Component {
                 return;
             }
             this._activeRoute = z;
+            z.onEnter && z.onEnter(dS, this);
             this.setState({
                 prevRoute,
-                currentRoute: nextRoute
+                currentRoute
             });
         }
     }
+    /**
+     * Returns the data store of the router.
+     * @returns {DataStore} the data store of the router.
+     */
     getDataStore() {
         return this._routeData;
     }
+    /**
+     * Get route definition of a given path.
+     * @returns {RouteDef} the route definition or {undefined} if not found.
+     */
     getRouteDef(path) {
         return this._routeDefs[this._routeIndices[path]];
     }
+    /**
+     * Creates a RouteDef given a path configuration.
+     * @param {RouteConfig} cfg the route configuration.
+     * @returns {RouteDef}
+     */
     routeDefFromPath(cfg) {
         let temp = null;
         let path = cfg.route;
@@ -104,7 +140,12 @@ export class Router extends React.Component {
         this._routeIndices[path] = this._routeDefs.length - 1;
         return (route);
     }
+    /**
+     * Sets a guard at the current route.
+     * @param {RouteGuard} guard the guard to protect the current route.
+     */
     setGuard(guard) {
+        this.guard = guard;
         this.props.history.setGuard(guard);
     }
     _checkRedirect() {
@@ -122,9 +163,10 @@ export class Router extends React.Component {
         }
     }
     componentDidMount() {
-        if (this.props.onRouteChange) {
-            this.props.onRouteChange(this._activeRoute, this._activeRoute.test(this.state.currentRoute));
-        }
+        // if (this.props.onRouteChange){
+        //     this.props.onRouteChange(this._activeRoute,this._activeRoute.test(this.state.currentRoute));
+        // }
+        this.props.history.setDelegate(this);
     }
     render() {
         return this._activeRoute ? this._activeRoute.render(this.getDataStore()) : null;

@@ -73,16 +73,28 @@ export function memoryHistory(initialRoute?:string):RouteHistory{
     }
 
     function change(inc:number){
-        let v = guard && guard.check(); 
-        if (typeof v === "object" && v && v.then){
-            v.then((okay)=>{
-                if (okay){
-                    doBackNext(inc);
-                }
-            })
-        }else if ((typeof v === "boolean" && v) || !guard){
-            doBackNext(inc);
+        //before making any change, check if there is a guard setup
+        //on the route 
+        if (guard){
+            //check if the guard is okay with us changing the route
+            guard(routeAt(inc+currentIndex))
+                .then((okay)=>{
+                    if (okay){
+                        doBackNext(inc);
+                    }
+                },()=>{
+                    return false; 
+                });
+            return; 
         }
+        doBackNext(inc);
+    }
+
+    function routeAt(index:number){
+        if (index >= 0 && index < history.length){
+            return history[index]; 
+        }
+        return null;
     }
 
     function back(){ 
@@ -97,17 +109,22 @@ export function memoryHistory(initialRoute?:string):RouteHistory{
         }
     }
 
+    function getCurrentRoute():string{
+        return history.length?history[history.length-1]:''; 
+    }
+
     function goTo(path:string){
         if (guard){
-            let v = guard.check(); 
-            if (typeof v === "object" && v && v.then){
-                v.then((okay)=>{
+            guard(path)
+                .then((okay)=>{
                     if (okay){
-                        doGoTo(path);
+                        doGoTo(path); 
+                        return; 
                     }
-                })
-                return; 
-            }
+                },()=>{
+                    return false; 
+                });
+            return; 
         }
         doGoTo(path);        
     }
@@ -147,26 +164,46 @@ export function hashHistory():RouteHistory{
         delegate:RouteHistoryDelegate = null;
     window.addEventListener('hashchange',onHashChange); 
 
+    function acceptHashChange(){
+        currentIndex++;
+        let newHash = location.hash.substr(1);
+        if (currentIndex < history.length){
+            history.splice(currentIndex);
+        }
+        history.push(newHash);
+    }
+
     function onHashChange(){
         if (enabled){
-            currentIndex++;
-            let newHash = location.hash.substr(1);
-            if (currentIndex < history.length){
-                history.splice(currentIndex);
+            if (guard){
+                guard(location.hash.slice(1))
+                    .then((okay)=>{
+                        if (okay){
+                            acceptHashChange();
+                            onChange(); 
+                            return; 
+                        }
+                        enabled = false; 
+                        location.hash = currentRoute(); 
+                    },()=>{
+                        enabled = false; 
+                        location.hash = currentRoute(); 
+                    });
+                return; 
             }
-            history.push(newHash);
         }
         enabled = true;
-        onChange();
     }
 
     function onChange(){
-        delegate && delegate.onRouteChange(history[currentIndex],currentIndex > 0?history[currentIndex-1]:null);
+        delegate && delegate.onRouteChange(history[currentIndex],
+        currentIndex > 0?history[currentIndex-1]:null);
     }
 
     function setDelegate(del:RouteHistoryDelegate){
         delegate = del; 
-        delegate && delegate.onRouteChange(history[currentIndex],currentIndex > 0?history[currentIndex-1]:null);
+        delegate && delegate.onRouteChange(history[currentIndex],
+        currentIndex > 0?history[currentIndex-1]:null);
     }
 
     function doBackNext(inc:number){
@@ -192,16 +229,18 @@ export function hashHistory():RouteHistory{
     }
 
     function change(inc:number){
-        let v = guard && guard.check(); 
-        if (typeof v === "object" && v && v.then){
-            v.then((okay)=>{
+        if (guard){
+            guard(routeAt(currentIndex+inc))
+            .then((okay)=>{
                 if (okay){
-                    doBackNext(inc);
+                    doBackNext(inc); 
                 }
-            })
-        }else if ((typeof v === "boolean" && v) || !guard){
-            doBackNext(inc);
+            },()=>{
+               return false; 
+            });
+            return;
         }
+        doBackNext(inc);
     }
 
     function back(){ 
@@ -217,17 +256,24 @@ export function hashHistory():RouteHistory{
     }
 
     function goTo(path:string){
-        let v = guard && guard.check(); 
-        if (typeof v === "object" && v && v.then){
-            v.then((okay)=>{
+        if (guard){
+            guard(path).then((okay)=>{
                 if (okay){
-                    doGoTo(path);
+                    doGoTo(path); 
                 }
-            })
-            return; 
-        }else if ((typeof v === "boolean" && v) || !guard){
-            doGoTo(path);
-        }    
+            },()=>{
+                return false; 
+            });
+            return;
+        }
+        doGoTo(path); 
+    }
+
+    function routeAt(index:number){
+        if (index >= 0 && index < history.length){
+            return history[index]; 
+        }
+        return null;
     }
 
     function prevRoute(){
@@ -270,19 +316,37 @@ export function popStateHistory(root:string):RouteHistory{
         return path.replace(root,'') || '/'; 
     } 
 
+    function acceptRouteChange(){
+        currentIndex++;
+        let newHash = getRoute(location.pathname);
+        if (currentIndex === history.length){
+            hist.push(newHash);
+        }else {
+            hist.splice(currentIndex);
+            hist[currentIndex] = newHash; 
+        }
+    }
+
     function onPopStateChange(event:PopStateEvent){
         if (enabled){
-            currentIndex++;
-            let newHash = getRoute(location.pathname);
-            if (currentIndex === history.length){
-                hist.push(newHash);
-            }else {
-                hist.splice(currentIndex);
-                hist[currentIndex] = newHash; 
+            if (guard){
+                guard(getRoute(location.pathname))
+                    .then((okay)=>{
+                        if (okay){
+                            acceptRouteChange(); 
+                            onChange();
+                            return
+                        }
+                        enabled = false; 
+                        location.pathname = getRoute(location.pathname);
+                    },()=>{
+                        enabled = false; 
+                        location.pathname = getRoute(location.pathname); 
+                    })
+                return; 
             }
         }
         enabled = true;
-        onChange();
     }
 
     function onChange(){
@@ -300,16 +364,25 @@ export function popStateHistory(root:string):RouteHistory{
     }
 
     function change(inc:number){
-        let v = guard && guard.check(); 
-        if (v && typeof v === "object"){
-            v.then((okay)=>{
-                if (okay){
-                    doBackNext(inc); 
-                }
-            });
-        }else if (!guard || (typeof v === "boolean" && v)){
-            doBackNext(inc);
+        if (guard){
+            guard(routeAt(inc+currentIndex))
+                .then((okay)=>{
+                    if (okay){
+                        doBackNext(inc); 
+                    }
+                },()=>{
+                    return false; 
+                }); 
+            return;
         }
+        doBackNext(inc);
+    }
+
+    function routeAt(index:number){
+        if (index >= 0 && index < history.length){
+            return history[index]; 
+        }
+        return null;
     }
 
     function back(){ 
@@ -336,16 +409,17 @@ export function popStateHistory(root:string):RouteHistory{
     }
 
     function goTo(path:string){
-        let v = guard && guard.check(path); 
-        if (typeof v === "object" && v.then){
-            return v.then((okay)=>{
+        if (guard){
+            guard(path).then((okay)=>{
                 if (okay){
                     doGoTo(path); 
                 }
-            }); 
-        }else if (!guard || (typeof v === "boolean" && v)){
-            doGoTo(path);
+            },()=>{
+                return false; 
+            });
+            return; 
         }
+        doGoTo(path);
     }
 
     function prevRoute(){

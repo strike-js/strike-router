@@ -8,9 +8,17 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
 };
 import * as React from 'react';
 import { IndexRoute, NotFoundRoute, Redirect, AuthRoute } from './Route';
+/**
+ * An identity function i.e. returns whatever it receives in its first paramters.
+ */
 export function identity(v) {
     return v;
 }
+/**
+ * A getter setter generator.
+ * Given an object, it returns a function that can be used to get
+ * or set properties of the object.
+ */
 export function getSet(obj) {
     return function (...args) {
         if (args.length === 0) {
@@ -54,6 +62,9 @@ export const TYPES_TO_REGEX = {
     "boolean": '(true|false|TRUE|FALSE)',
     "alphanumeric": '([a-zA-Z0-9]+)',
 };
+/**
+ * Creates a simple local {@link DataStore}.
+ */
 export function createDataStore() {
     var data = {};
     function get(key) {
@@ -79,6 +90,11 @@ export function getParamsFromMatches(params, matches, route, path) {
     }
     return data;
 }
+/**
+ * Parases a route with path parameters.
+ * @param {string} path the path to parse.
+ * @returns {ParsedRoute} the parsed route.
+ */
 export function parseRoute(path) {
     let params = [];
     let regex = path.replace(/:([^\s\/]+):(number|string|boolean)/g, (e, k, v) => {
@@ -94,6 +110,7 @@ export function parseRoute(path) {
     };
 }
 export function createRouteDef(cfg) {
+    cfg.route = cfg.route.replace(/[\/]{2,}/g, '/');
     let { route, renderStack, authenticate, props, isRedirect, isAuth, hasChildren } = cfg;
     let { regex, routeParams } = parseRoute(route);
     let params = {};
@@ -126,7 +143,7 @@ export function createRouteDef(cfg) {
     }
     function inject(dataStore, component, props) {
         let $inject = component.$inject;
-        props.routeParams = routeParams;
+        props.routeParams = params;
         if (typeof $inject === "object" && $inject.length) {
             $inject.forEach((e) => {
                 props[e] = dataStore.get(e);
@@ -166,6 +183,8 @@ export function createRouteDef(cfg) {
         route,
         data,
         auth,
+        onEnter: cfg.onEnter || (stack.length && stack[0] && stack[0].length && stack[0][0].onEnter),
+        onLeave: cfg.onLeave || (stack.length && stack[0] && stack[0].length && stack[0][0].onEnter),
         props: _props,
         isRedirect,
         isAuth,
@@ -173,6 +192,12 @@ export function createRouteDef(cfg) {
     };
     return o;
 }
+/**
+ * An implementation of the ES6 find method.
+ * @param {T[]} array the array to loop through.
+ * @param {IteratorCallback<T>} fn the iterator to call on every item in
+ * the array up until the method returns a truthful value.
+ */
 export function find(array, fn) {
     let i = 0, l = array.length;
     for (; i < l; i++) {
@@ -201,7 +226,9 @@ export function traverse(children, router, renderStack, parentPath = '') {
                 props: child.props,
                 renderStack,
                 isRedirect: false,
-                isAuth: false
+                isAuth: false,
+                onEnter: child.props.onEnter,
+                onLeave: child.props.onLeave
             });
         }
         else if (child.type === NotFoundRoute) {
@@ -211,7 +238,9 @@ export function traverse(children, router, renderStack, parentPath = '') {
                 props: child.props,
                 renderStack,
                 isRedirect: false,
-                isAuth: false
+                isAuth: false,
+                onEnter: child.props.onEnter,
+                onLeave: child.props.onLeave
             });
         }
         else if (child.type === Redirect && child.props.to && child.props.to.length > 0) {
@@ -221,7 +250,9 @@ export function traverse(children, router, renderStack, parentPath = '') {
                 props: child.props,
                 renderStack,
                 isRedirect: true,
-                isAuth: false
+                isAuth: false,
+                onEnter: child.props.onEnter,
+                onLeave: child.props.onLeave
             });
         }
         else if (child.type === AuthRoute && child.props.auth) {
@@ -233,6 +264,8 @@ export function traverse(children, router, renderStack, parentPath = '') {
                 isRedirect: false,
                 isAuth: true,
                 authenticate: child.props.auth,
+                onEnter: child.props.onEnter,
+                onLeave: child.props.onLeave
             });
         }
         else {

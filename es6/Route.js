@@ -1,4 +1,7 @@
 import * as React from 'react';
+/**
+ * A route that can be used to provide authentication mechanism.
+ */
 export class AuthRoute extends React.Component {
     constructor(props) {
         super(props);
