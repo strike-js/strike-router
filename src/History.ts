@@ -171,16 +171,17 @@ export function hashHistory():RouteHistory{
             history.splice(currentIndex);
         }
         history.push(newHash);
+        onChange(); 
     }
 
     function onHashChange(){
+        let newRoute = location.hash.slice(1); 
         if (enabled){
             if (guard){
-                guard(location.hash.slice(1))
+                guard(newRoute)
                     .then((okay)=>{
                         if (okay){
                             acceptHashChange();
-                            onChange(); 
                             return; 
                         }
                         enabled = false; 
@@ -191,6 +192,7 @@ export function hashHistory():RouteHistory{
                     });
                 return; 
             }
+            acceptHashChange();
         }
         enabled = true;
     }
