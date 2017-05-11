@@ -452,6 +452,8 @@ export function traverse(children:React.ReactChild, router:IRouter, renderStack:
                 hasChildren:hasChildren, 
                 props:child.props, 
                 renderStack,
+                onEnter:child.props.onEnter,
+                onLeave:child.props.onLeave,
                 isRedirect:false,
                 isAuth:false});  
         }
