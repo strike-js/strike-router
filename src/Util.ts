@@ -391,6 +391,7 @@ export function traverse(children:React.ReactChild, router:IRouter, renderStack:
     return React.Children.map(children, (child:any, index:number) => {
         let hasChildren = countChildren(child.props.children) > 0,
             childPath = child.props.path;
+        child.props.props = child.props.props || {}; 
         child.props.props.router = router;
         child.props.props.dataStore = router.getDataStore();
         renderStack.push([child.props.component,child.props.props]);
