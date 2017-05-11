@@ -386,15 +386,16 @@ export interface IRouter extends RouteDataStore{
 }
 
 let countChildren = React.Children.count;
+
 export function traverse(children:React.ReactChild, router:IRouter, renderStack:any[][], parentPath = '') {
     let pathSep = router.PATH_SEP;
     return React.Children.map(children, (child:any, index:number) => {
         let hasChildren = countChildren(child.props.children) > 0,
             childPath = child.props.path;
-        //let childProps = child.props.props || {}; 
-        child.props.props.router = router;
-        child.props.props.dataStore = router.getDataStore();
-        renderStack.push([child.props.component,child.props.props]);
+        let childProps = child.props.props || {}; 
+        childProps.router = router;
+        childProps.dataStore = router.getDataStore();
+        renderStack.push([child.props.component,childProps]);
         
         if (hasChildren) {
             traverse(child.props.children, router, renderStack, [parentPath, childPath].join(pathSep));
