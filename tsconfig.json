@@ -4,11 +4,13 @@
         "target": "es5",
         "module": "commonjs",
         "jsx": "react",
-        "outDir": "./lib"
+        "outDir": "./lib",
+        "lib": [
+            "es5",
+            "es2015.promise",
+            "dom"
+        ]
     },
-    "types": [
-         "bluebird-global"
-    ],
     "exclude": [
         "node_modules"
     ]
