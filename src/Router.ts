@@ -226,7 +226,7 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
     routeDefFromPath(cfg:RouteConfig):RouteDef{
         let temp = null;
         let path = cfg.route;
-        if (temp = this._routeIndices[path]) {
+        if (typeof (temp = this._routeIndices[path]) !== "undefined") {
             return this._routeDefs[temp];
         }
         let route = createRouteDef(cfg);;
@@ -265,6 +265,17 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
         //     this.props.onRouteChange(this._activeRoute,this._activeRoute.test(this.state.currentRoute));
         // }
         this.props.history.setDelegate(this);
+    }
+
+    componentWillReceiveProps(nextProps:RouterProps){
+        if (nextProps.children !== this.props.children){
+            this._routeDefs = [];
+            this._routeIndices = {}; 
+            traverse(nextProps.children, this, [], nextProps.rootPath || '');
+            this.setState({
+                currentRoute:nextProps.history.currentRoute()
+            });
+        }
     }
 
     render() {
