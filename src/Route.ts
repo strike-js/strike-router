@@ -28,7 +28,7 @@ export interface BaseRouteProps {
     /**
      * The component to render when the route is active. 
      */
-    component?:React.ComponentClass<any>; 
+    component?:React.ComponentClass<any>|React.StatelessComponent<any>; 
     /**
      * The props to use as the route's component props.
      * The router will also inject the a {DataStore} instance and 

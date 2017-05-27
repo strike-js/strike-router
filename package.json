@@ -1,6 +1,6 @@
 {
   "name": "strikejs-router",
-  "version": "1.0.46",
+  "version": "1.0.47",
   "description": "A declarative router for ReactJS application. ",
   "types": "strikejs-router.d.ts",
   "typings": "strikejs-router.d.ts",
