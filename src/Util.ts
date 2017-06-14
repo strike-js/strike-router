@@ -236,6 +236,7 @@ export function createRouteDef(cfg:RouteConfig):RouteDef{
     function inject(dataStore:DataStore,component:any,props:any){
         let $inject:string[] = component.$inject; 
         props.routeParams = params;
+        props.routeParams.test = test; 
         if (typeof $inject === "object" && $inject.length){
             $inject.forEach((e)=>{
                 props[e] = dataStore.get(e);
