@@ -242,6 +242,11 @@ export function createRouteDef(cfg:RouteConfig):RouteDef{
                 props[e] = dataStore.get(e);
             });
         }
+        if (typeof props.dataToPropagate === "object" && props.dataToPropagate.length){
+            props.dataToPropagate.forEach((e)=>{
+                props[e] = dataStore.get(e); 
+            })
+        }
     }
 
     function render(dataStore:DataStore){
