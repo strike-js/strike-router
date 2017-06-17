@@ -125,7 +125,7 @@ declare module "strikejs-router"{
     export interface BaseRouteProps {
         constraints?:Constraint[];
         component?:React.ComponentClass<any>|React.StatelessComponent<any>; 
-        propsToPropagate?:string[]; 
+        dataToPropagate?:string[]; 
         props?:any; 
         render?:(props:any)=>React.ReactElement<any>; 
         onEnter?:(dataStore:DataStore,router:IRouter)=>void; 

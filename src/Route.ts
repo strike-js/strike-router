@@ -52,7 +52,7 @@ export interface BaseRouteProps {
     /**
      * A list of properties to propagate as props from the data store.
      */
-    propsToPropagate?:string[];
+    dataToPropagate?:string[];
 }
 
 export interface RouteProps extends BaseRouteProps{
