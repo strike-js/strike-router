@@ -48,6 +48,11 @@ export interface BaseRouteProps {
      * A callback to be called when the route is about to leave. 
      */
     onLeave?:(dataStore:DataStore,router:IRouter)=>void;
+
+    /**
+     * A list of properties to propagate as props from the data store.
+     */
+    propsToPropagate?:string[];
 }
 
 export interface RouteProps extends BaseRouteProps{
