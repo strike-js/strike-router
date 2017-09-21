@@ -168,7 +168,8 @@ export class Router extends React.Component<RouterProps,RouterState> implements 
                     }
                     let redirectRoute = (typeof redirectTo === "string" && redirectTo )||z.props("redirectTo");
                     if (redirectRoute){
-                        history.goTo(redirectTo);
+                        location.hash = redirectRoute; 
+                        // history.goTo(redirectTo);
                         return; 
                     }
                     history.goTo(prevRoute);
